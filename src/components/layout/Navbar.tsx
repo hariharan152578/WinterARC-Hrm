@@ -177,7 +177,7 @@ export default function Navbar() {
 
   const allMenu = [
     { name: "Overview", path: "/dashboard", icon: LayoutDashboard, roles: ["SUPER_ADMIN","MASTER_ADMIN","ADMIN","MANAGER","TEAMLEAD","EMPLOYEE"] },
-    { name: "My Team", path: "/dashboard/employees", icon: Users, roles: ["ADMIN","MANAGER"] },
+    { name: "Tasks", path: "/dashboard/assign", icon: Users, roles: ["ADMIN","MANAGER","TEAMLEAD","EMPLOYEE"] },
     { name: "Attendance", path: "/dashboard/attendance", icon: CalendarCheck, roles: ["ADMIN","MANAGER","TEAMLEAD","EMPLOYEE"] },
     { name: "To Do", path: "/dashboard/todo", icon: ClipboardList, roles: ["ADMIN","MANAGER","TEAMLEAD","EMPLOYEE"] },
     { name: "Benefits", path: "/dashboard/benefits", icon: Gift, roles: ["ADMIN","MANAGER","TEAMLEAD","EMPLOYEE"] },
