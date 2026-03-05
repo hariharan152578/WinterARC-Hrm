@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@theme {
+  --color-app-background-start: #EBF1FF;
+  --color-app-background-end: #CEDDFF;
+  --color-form-background: #131623;
+}
+
 /* ------------------------------
    Global Theme Variables
 ------------------------------ */

@@ -21,6 +21,7 @@ export interface EventType {
   files: string[];
   createdBy: number;
   tenantId: number;
+  completed?: boolean;
   createdAt: string;
   updatedAt: string;
 }
