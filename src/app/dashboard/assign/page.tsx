@@ -421,7 +421,6 @@
 //     </div>
 //   );
 // }
-
 "use client";
 
 import { useEffect } from "react";
@@ -429,25 +428,28 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AssignPage() {
-
   const router = useRouter();
   const { user } = useAuth();
 
   useEffect(() => {
-
     if (!user) return;
 
+    // Logic: Workers see their tasks, Admins/Managers see the assignment board
     if (user.role === "EMPLOYEE") {
       router.replace("/dashboard/assign/mytask");
     } else {
       router.replace("/dashboard/assign/assigned");
     }
-
   }, [user, router]);
 
   return (
-    <div className="flex items-center justify-center h-[60vh] text-gray-400 font-semibold">
-      Redirecting...
+    // min-h-[50vh] ensures the "Redirecting" text is vertically centered
+    // regardless of whether it's an iPad, iPhone, or Desktop.
+    <div className="flex flex-col items-center justify-center min-h-[50vh] w-full animate-pulse">
+      <div className="h-10 w-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+      <p className="text-sm md:text-base text-gray-400 font-medium tracking-wide">
+        Loading your workspace...
+      </p>
     </div>
   );
 }

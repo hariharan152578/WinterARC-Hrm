@@ -9,7 +9,6 @@ export default function RequestsLayout({
 }: {
   children: React.ReactNode;
 }) {
-
   const pathname = usePathname();
   const { user } = useAuth();
 
@@ -31,34 +30,43 @@ export default function RequestsLayout({
   );
 
   return (
-    <div className="space-y-6">
-
-      <div className="flex gap-4 pb-4">
-
+    <div className="space-y-4 md:space-y-6">
+      {/* 1. Responsive Tab Container: 
+          - flex-nowrap + overflow-x-auto ensures tabs don't wrap to a second line.
+          - no-scrollbar hides the scrollbar for a cleaner mobile UI.
+      */}
+      <div className="flex items-center gap-2 md:gap-4 pb-2 md:pb-4 overflow-x-auto no-scrollbar border-b border-gray-100 md:border-none">
         {filteredTabs.map((tab) => {
-
           const active = pathname === tab.path;
 
           return (
             <Link
               key={tab.path}
               href={tab.path}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                active
-                  ? "bg-gray-100 text-black"
-                  : "text-gray-500 hover:text-black"
-              }`}
+              className={`
+                px-4 py-2 
+                rounded-full 
+                text-xs md:text-sm 
+                font-semibold 
+                whitespace-nowrap 
+                transition-all
+                ${
+                  active
+                    ? "bg-black text-white shadow-md shadow-purple-100" 
+                    : "text-gray-500 hover:bg-gray-100 hover:text-black"
+                }
+              `}
             >
               {tab.name}
             </Link>
           );
-
         })}
-
       </div>
 
-      {children}
-
+      {/* Content Area */}
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+        {children}
+      </div>
     </div>
   );
 }

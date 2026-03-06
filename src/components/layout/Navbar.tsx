@@ -380,7 +380,6 @@
 //     </>
 //   );
 // }
-
 "use client";
 
 import Link from "next/link";
@@ -396,14 +395,11 @@ import {
   LayoutDashboard,
   Users,
   CalendarCheck,
-  ClipboardList,
-  Gift,
-  Briefcase,
   Mail,
-  Calendar,
   Settings,
   X,
   LogOut,
+  Menu, // Added for potential mobile menu toggle
 } from "lucide-react";
 
 export default function Navbar() {
@@ -413,9 +409,7 @@ export default function Navbar() {
 
   const [profile, setProfile] = useState<any>(null);
   const [open, setOpen] = useState(false);
-  const [inboxCount, setInboxCount] = useState(0);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [showReportModal, setShowReportModal] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -425,9 +419,7 @@ export default function Navbar() {
       try {
         const data = await getUserProfile(user.id);
         setProfile(data);
-      } catch (err) {
-        console.error("Profile fetch failed");
-      }
+      } catch (err) { console.error("Profile fetch failed"); }
     };
     fetchProfile();
   }, [user]);
@@ -436,49 +428,12 @@ export default function Navbar() {
     ? `http://localhost:5000/${profile.profileImage}`
     : "/avatar.png";
 
-  const handleLogoutClick = async () => {
-    if (!user) return;
-    try {
-      const reports = await ReportService.getMyReports();
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const submittedToday = reports.find((r: any) => {
-        const created = new Date(r.createdAt);
-        created.setHours(0, 0, 0, 0);
-        return created.getTime() === today.getTime();
-      });
-      if (submittedToday) {
-        setShowLogoutModal(true);
-      } else {
-        setShowReportModal(true);
-      }
-    } catch {
-      setShowLogoutModal(true);
-    }
-  };
-
   const confirmLogout = () => {
     logout();
     router.push("/login");
   };
 
-  const fetchInboxCount = async () => {
-    try {
-      const res = await api.get("/requests/inbox");
-      setInboxCount(res.data.length);
-    } catch {
-      setInboxCount(0);
-    }
-  };
-
-  useEffect(() => {
-    if (user?.role === "ADMIN" || user?.role === "MANAGER" || user?.role === "TEAMLEAD") {
-      fetchInboxCount();
-      const interval = setInterval(fetchInboxCount, 20000);
-      return () => clearInterval(interval);
-    }
-  }, [user]);
-
+  // Close dropdown on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -493,58 +448,57 @@ export default function Navbar() {
     { name: "Overview", path: "/dashboard", icon: LayoutDashboard, roles: ["SUPER_ADMIN", "MASTER_ADMIN", "ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
     { name: "Tasks", path: "/dashboard/assign", icon: Users, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
     { name: "Event planner", path: "/dashboard/events", icon: CalendarCheck, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
-    // { name: "To Do", path: "/dashboard/todo", icon: ClipboardList, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
-    // { name: "Benefits", path: "/dashboard/benefits", icon: Gift, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
-    // { name: "Projects", path: "/dashboard/projects", icon: Briefcase, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
     { name: "Inbox", path: "/dashboard/request", icon: Mail, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
-    // { name: "Leaves", path: "/dashboard/leaves", icon: Calendar, roles: ["ADMIN", "MANAGER", "TEAMLEAD"] },
     { name: "Organization", path: "/dashboard/organization", icon: Users, roles: ["ADMIN", "MANAGER", "TEAMLEAD"] },
-    { name: "Reports", path: "/dashboard/settings", icon: Settings, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
+    { name: "Reports", path: "/dashboard/daily-work", icon: Settings, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
   ];
 
   const menu = allMenu.filter((item) => item.roles.includes(user?.role as string));
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between px-8 py-4">
-          <h1 className="text-xl font-bold tracking-tight">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+        {/* TOP BAR */}
+        <div className="flex items-center justify-between px-4 md:px-8 py-3 md:py-4">
+          <h1 className="text-lg md:text-xl font-bold tracking-tight shrink-0">
             <span className="text-slate-900">Winter</span>
             <span className="text-purple-600">Arc.</span>
           </h1>
 
           <div className="relative" ref={dropdownRef}>
-            {/* CLICKABLE PROFILE AREA */}
             <div
               onClick={() => setOpen(!open)}
-              className="flex items-center gap-2 bg-gray-50 border border-gray-200 pl-1 pr-3 py-1 rounded-full cursor-pointer hover:bg-gray-100 transition-colors"
+              className="flex items-center gap-2 bg-gray-50 border border-gray-200 p-1 md:pr-3 rounded-full cursor-pointer hover:bg-gray-100 transition-all"
             >
-              <img src={profileImage} className="w-8 h-8 rounded-full object-cover" />
-              <span className="text-sm font-semibold text-gray-700">{profile?.name || user?.name}</span>
-              <ChevronDown size={14} />
+              <img src={profileImage} className="w-7 h-7 md:w-8 md:h-8 rounded-full object-cover" alt="Profile" />
+              {/* Hide name on very small screens to prevent overlap */}
+              <span className="hidden sm:inline text-xs md:text-sm font-semibold text-gray-700 max-w-[100px] truncate">
+                {profile?.name || user?.name}
+              </span>
+              <ChevronDown size={14} className="text-gray-500 mr-1 md:mr-0" />
             </div>
 
-            {/* UPDATED GOOGLE-STYLE MODAL */}
+            {/* PROFILE DROPDOWN */}
             {open && (
-              <div className="absolute right-0 mt-3 w-72 bg-white border border-gray-200 rounded-3xl shadow-2xl z-50 overflow-hidden p-4">
+              <div className="absolute right-0 mt-3 w-64 md:w-72 bg-white border border-gray-200 rounded-2xl md:rounded-3xl shadow-2xl z-50 overflow-hidden p-4">
                 <div className="flex flex-col items-center text-center py-2">
-                  <img src={profileImage} className="w-20 h-20 rounded-full object-cover mb-3" />
-                  <p className="font-semibold text-base">{profile?.name || user?.name}</p>
-                  <p className="text-sm text-gray-500 mb-4">{profile?.email || user?.email}</p>
+                  <img src={profileImage} className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover mb-3" alt="Large Profile" />
+                  <p className="font-semibold text-sm md:text-base">{profile?.name || user?.name}</p>
+                  <p className="text-xs text-gray-500 mb-4 truncate w-full px-2">{profile?.email || user?.email}</p>
                   <button
                     onClick={() => { router.push("/dashboard/profile"); setOpen(false); }}
-                    className="px-6 py-2 border border-gray-300 rounded-full text-sm font-medium hover:bg-gray-50 transition"
+                    className="w-full py-2 border border-gray-300 rounded-full text-xs md:text-sm font-medium hover:bg-gray-50 transition"
                   >
-                    Manage your Account
+                    Manage Account
                   </button>
                 </div>
                 <div className="border-t border-gray-100 mt-4 pt-2">
                   <button
-                    onClick={() => { handleLogoutClick(); setOpen(false); }}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 rounded-xl"
+                    onClick={() => { setShowLogoutModal(true); setOpen(false); }}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                   >
                     <LogOut size={18} />
-                    Sign out of WinterArc
+                    Sign out
                   </button>
                 </div>
               </div>
@@ -552,12 +506,20 @@ export default function Navbar() {
           </div>
         </div>
 
-        <nav className="flex items-center gap-2 px-8 pb-4 overflow-x-auto">
+        {/* BOTTOM NAVIGATION - RESPONSIVE SCROLL */}
+        <nav className="flex items-center gap-1 md:gap-2 px-4 md:px-8 pb-3 md:pb-4 overflow-x-auto no-scrollbar scroll-smooth">
           {menu.map((item) => {
             const active = pathname === item.path;
             return (
-              <Link key={item.path} href={item.path} className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm ${active ? "bg-purple-100 text-purple-700" : "text-gray-500 hover:bg-gray-100"}`}>
-                <item.icon size={16} />
+              <Link 
+                key={item.path} 
+                href={item.path} 
+                className={`
+                  flex items-center gap-2 px-3 md:px-4 py-2 rounded-full text-xs md:text-sm whitespace-nowrap transition-all
+                  ${active ? "bg-purple-100 text-purple-700 font-medium" : "text-gray-500 hover:bg-gray-100"}
+                `}
+              >
+                <item.icon size={16} className="shrink-0" />
                 {item.name}
               </Link>
             );
@@ -565,14 +527,25 @@ export default function Navbar() {
         </nav>
       </header>
 
+      {/* MODAL - CENTERED FOR ALL SCREENS */}
       {showLogoutModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[110]">
-          <div className="bg-white rounded-xl p-6 w-[90%] max-w-md relative">
-            <button onClick={() => setShowLogoutModal(false)} className="absolute top-3 right-3 text-gray-500"><X size={18} /></button>
-            <h2 className="text-lg font-semibold mb-4">Are you sure you want to logout?</h2>
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setShowLogoutModal(false)} className="px-4 py-2 bg-gray-200 rounded">Cancel</button>
-              <button onClick={confirmLogout} className="px-4 py-2 bg-red-500 text-white rounded">Logout</button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-[340px] md:max-w-md shadow-xl animate-in fade-in zoom-in duration-200">
+            <h2 className="text-lg font-semibold mb-2">Sign out?</h2>
+            <p className="text-gray-500 text-sm mb-6">Are you sure you want to log out of your session?</p>
+            <div className="flex flex-col sm:flex-row justify-end gap-2 md:gap-3">
+              <button 
+                onClick={() => setShowLogoutModal(false)} 
+                className="order-2 sm:order-1 px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmLogout} 
+                className="order-1 sm:order-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>
