@@ -31,8 +31,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="p-10">
-        <Skeleton className="h-40 w-full rounded-3xl" />
+      <div className="p-6">
+        <Skeleton className="h-40 w-full" />
       </div>
     );
   }

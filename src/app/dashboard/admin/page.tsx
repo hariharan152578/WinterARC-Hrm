@@ -45,7 +45,7 @@ const initialFormState: ManagerForm = {
 ================================ */
 function StatCard({ title, value, color, icon }: any) {
   return (
-    <div className={`${color} p-6 rounded-[2rem] relative flex flex-col justify-between h-44 transition-all hover:scale-[1.02] shadow-sm`}>
+    <div className={`${color} rounded-[2rem] relative flex flex-col justify-between h-44 transition-all hover:scale-[1.02] shadow-sm`}>
       <div className="p-2 bg-white/40 w-fit rounded-lg shadow-sm">
         {icon}
       </div>

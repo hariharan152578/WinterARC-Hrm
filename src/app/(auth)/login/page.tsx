@@ -111,7 +111,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center mt-8 text-sm text-gray-400 font-medium">
-            Don't have an account? <span className="text-purple-600 font-bold cursor-pointer hover:underline">Contact Admin</span>
+            Don`t have an account? <span className="text-purple-600 font-bold cursor-pointer hover:underline">Contact Admin</span>
           </p>
         </div>
       </div>

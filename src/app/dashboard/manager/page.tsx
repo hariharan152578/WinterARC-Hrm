@@ -116,7 +116,7 @@ export default function ManagerDashboardPage() {
   }
 
   return (
-    <div ref={containerRef} className="sp-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div ref={containerRef} className="sp-4 md:p-8 space-y-8 max-w mx-auto">
 
       {/* ================= HEADER ================= */}
       <div className="space-y-6 animate-section">
