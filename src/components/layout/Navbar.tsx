@@ -498,8 +498,8 @@ export default function Navbar() {
     // { name: "Projects", path: "/dashboard/projects", icon: Briefcase, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
     { name: "Inbox", path: "/dashboard/request", icon: Mail, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
     // { name: "Leaves", path: "/dashboard/leaves", icon: Calendar, roles: ["ADMIN", "MANAGER", "TEAMLEAD"] },
-    // { name: "Settings", path: "/dashboard/settings", icon: Settings, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
     { name: "Organization", path: "/dashboard/organization", icon: Users, roles: ["ADMIN", "MANAGER", "TEAMLEAD"] },
+    { name: "Reports", path: "/dashboard/settings", icon: Settings, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
   ];
 
   const menu = allMenu.filter((item) => item.roles.includes(user?.role as string));
@@ -544,7 +544,7 @@ export default function Navbar() {
                     className="flex w-full items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 rounded-xl"
                   >
                     <LogOut size={18} />
-                    Sign out of all accounts
+                    Sign out of WinterArc
                   </button>
                 </div>
               </div>
