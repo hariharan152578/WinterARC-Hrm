@@ -1,21 +1,25 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { User } from "@/types/auth.types";
 import { loginUser } from "@/services/auth.service";
 import { LoginResponse } from "@/types/auth.types";
+import io from "socket.io-client";
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
+  socket: any;
+  onlineUsers: Set<number>;
   login: (
     email: string | null,
     personId: string | null,
     password: string
-  ) => Promise<LoginResponse>; // ✅ FIXED
+  ) => Promise<LoginResponse>;
   logout: () => void;
 }
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({
@@ -25,7 +29,48 @@ export const AuthProvider = ({
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true); // 🔥 important
+  const [socket, setSocket] = useState<any>(null);
+  const [onlineUsers, setOnlineUsers] = useState<Set<number>>(new Set());
+  const [loading, setLoading] = useState(true);
+
+  const initSocket = (token: string) => {
+    try {
+      // Disconnect existing socket if any
+      if (socket) {
+        socket.disconnect();
+      }
+
+      const s = io("http://localhost:5000", {
+        auth: { token },
+        reconnection: true,
+      });
+
+      s.on("connect", () => {
+        console.log("✅ Socket connected:", s.id);
+      });
+
+      s.on("connect_error", (err: any) => {
+        console.error("❌ Socket connection error:", err.message);
+      });
+
+      s.on("presence:initial", (userIds: number[]) => {
+        setOnlineUsers(new Set(userIds));
+      });
+
+      s.on("presence:update", ({ userId, status }: { userId: number, status: 'online' | 'offline' }) => {
+        setOnlineUsers(prev => {
+          const next = new Set(prev);
+          if (status === 'online') next.add(userId);
+          else next.delete(userId);
+          return next;
+        });
+      });
+
+      setSocket(s);
+    } catch (err) {
+      console.error("Socket init failed", err);
+    }
+  };
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
@@ -34,9 +79,10 @@ export const AuthProvider = ({
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
+      initSocket(storedToken);
     }
 
-    setLoading(false); // 🔥 auth check finished
+    setLoading(false);
   }, []);
 
   const login = async (
@@ -52,17 +98,33 @@ export const AuthProvider = ({
     localStorage.setItem("token", data.token);
     localStorage.setItem("user", JSON.stringify(data.user));
 
+    initSocket(data.token);
+
     return data;
   };
 
   const logout = () => {
+    if (socket) {
+      socket.disconnect();
+      setSocket(null);
+    }
     setUser(null);
     setToken(null);
     localStorage.clear();
   };
 
+  const value = useMemo(() => ({
+    user,
+    token,
+    loading,
+    socket,
+    onlineUsers,
+    login,
+    logout
+  }), [user, token, loading, socket, onlineUsers]);
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

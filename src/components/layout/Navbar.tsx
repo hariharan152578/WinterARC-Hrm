@@ -396,6 +396,8 @@ import {
   Users,
   CalendarCheck,
   Mail,
+  MessageSquare,
+  Send,
   Settings,
   X,
   LogOut,
@@ -446,6 +448,7 @@ export default function Navbar() {
 
   const allMenu = [
     { name: "Overview", path: "/dashboard", icon: LayoutDashboard, roles: ["SUPER_ADMIN", "MASTER_ADMIN", "ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
+    { name: "Chat", path: "/dashboard/chat", icon: MessageSquare, roles: ["SUPER_ADMIN", "MASTER_ADMIN", "ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
     { name: "Tasks", path: "/dashboard/assign", icon: Users, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
     { name: "Event planner", path: "/dashboard/events", icon: CalendarCheck, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
     { name: "Inbox", path: "/dashboard/request", icon: Mail, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
