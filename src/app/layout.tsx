@@ -14,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
-      <body 
+      <body
         className="
           bg-gray-100 
           text-gray-900 
@@ -26,8 +26,8 @@ export default function RootLayout({
       >
         <AuthProvider>
           {/* Mobile-friendly toast position: centered on small screens, top-right on desktop */}
-          <Toaster 
-            position="top-right" 
+          <Toaster
+            position="top-right"
             toastOptions={{
               className: 'max-sm:w-full max-sm:mx-4',
             }}

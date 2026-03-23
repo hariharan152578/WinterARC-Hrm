@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { Lock, Mail, User, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
+import { Lock, Mail, User, ArrowRight, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import LoginRequestModal from "@/components/auth/LoginRequestModal";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [emailOrPersonId, setEmailOrPersonId] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +35,26 @@ export default function LoginPage() {
       toast.success("Welcome back!");
       router.push("/dashboard");
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Login failed");
+      const message = error?.response?.data?.message || "Login failed";
+      toast.error(message);
+
+      if (error?.response?.data?.canRequestLogin) {
+        // Automatically show the option to request multiple login
+        toast((t) => (
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium">Need to log in again?</span>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                setIsRequestModalOpen(true);
+              }}
+              className="bg-purple-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-purple-700 transition-colors self-start"
+            >
+              Raise Request
+            </button>
+          </div>
+        ), { duration: 6000, icon: <AlertCircle className="text-purple-600" /> });
+      }
     } finally {
       setLoading(false);
     }
@@ -111,6 +132,10 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center mt-8 text-sm text-gray-400 font-medium">
+            Need multiple login? <span onClick={() => setIsRequestModalOpen(true)} className="text-purple-600 font-bold cursor-pointer hover:underline">Raise Request</span>
+          </p>
+
+          <p className="text-center mt-2 text-sm text-gray-400 font-medium">
             Don`t have an account? <span className="text-purple-600 font-bold cursor-pointer hover:underline">Contact Admin</span>
           </p>
         </div>
@@ -142,6 +167,11 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      <LoginRequestModal
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+      />
     </div>
   );
 }

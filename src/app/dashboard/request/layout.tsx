@@ -28,12 +28,7 @@ export default function RequestsLayout({
       name: "My Requests",
       path: "/dashboard/request/my-requests",
       roles: ["EMPLOYEE", "MANAGER", "TEAMLEAD"],
-    },
-    {
-      name: "Assign Task",
-      path: "/dashboard/request/assign",
-      roles: ["ADMIN", "MANAGER", "TEAMLEAD","EMPLOYEE"],
-    },
+    }
   ];
 
   const filteredTabs = tabs.filter((tab) =>
@@ -42,7 +37,7 @@ export default function RequestsLayout({
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-4 pb-4">
+      <div className="flex gap-4 pb-4 border-b border-slate-100 mb-4 overflow-x-auto scrollbar-hide">
         {filteredTabs.map((tab) => {
           const active = pathname.startsWith(tab.path);
 
@@ -50,10 +45,10 @@ export default function RequestsLayout({
             <Link
               key={tab.path}
               href={tab.path}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${
                 active
-                  ? "bg-gray-100 text-black"
-                  : "text-gray-500 hover:text-black"
+                  ? "bg-[#e8f5f4] text-[#2d6a4f] shadow-sm"
+                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
               }`}
             >
               {tab.name}

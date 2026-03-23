@@ -30,6 +30,11 @@ export const createSubUser = (data: any) =>
 export const getHierarchyUsers = () =>
   api.get("/users/hierarchy");
 
+export const getMyTeam = () =>
+  api.get("/users/my-team");
+
+export const getMySessions = () => api.get("/users/my-sessions");
+
 // 🔵 DASHBOARD
 export const getSuperAdminDashboard = () =>
   api.get("/dashboard/super-dashboard");

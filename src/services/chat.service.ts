@@ -27,3 +27,20 @@ export const createGroup = (formData: FormData) =>
   api.post("/groups", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+
+export const getTenantMessages = (lastId?: number) =>
+  api.get("/tenant-chat", { params: { lastId } });
+
+export const sendTenantMessage = (formData: FormData) =>
+  api.post("/tenant-chat/send", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const deletePersonalMessage = (messageId: number) =>
+  api.delete(`/personal/messages/${messageId}`);
+
+export const deleteGroupMessage = (groupId: number, messageId: number) =>
+  api.delete(`/groups/${groupId}/messages/${messageId}`);
+
+export const deleteTenantMessage = (messageId: number) =>
+  api.delete(`/tenant-chat/messages/${messageId}`);

@@ -1,6 +1,6 @@
 "use client";
 
-import Navbar from "@/components/layout/Navbar";
+import Sidebar from "@/components/layout/Sidebar";
 
 export default function DashboardLayout({
   children,
@@ -8,29 +8,19 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    // 1. Added responsive padding to the outer wrapper (p-0 on mobile, p-4 on desktop)
-    <div className="min-h-screen bg-[#f4f6fb] md:p-4 lg:p-6">
-      <div 
-        className="
-          bg-white 
-          shadow-sm 
-          min-h-screen 
-          md:min-h-[90vh] 
-          overflow-hidden 
-          flex 
-          flex-col
-          /* 2. Remove rounded corners on mobile to save space, add them on medium screens */
-          rounded-none 
-          md:rounded-3xl 
-        "
-      >
-        <Navbar />
-        
-        {/* 3. Fluid padding: p-4 for mobile, p-6 for tablets, p-10 for desktops */}
-        <main className="flex-1 p-4 md:p-6 lg:p-10 bg-[#f7f8fc]">
+    <div className="min-h-screen bg-[#f8f9fa] flex flex-col lg:flex-row overflow-x-hidden">
+      {/* SIDEBAR - Fixed on mobile, sticky on desktop */}
+      <Sidebar />
+
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 w-full min-h-screen lg:h-screen lg:overflow-y-auto px-4 md:px-6 lg:px-8 pt-20 pb-6 lg:py-8 transition-all duration-500">
+        <div className="max-w-[1400px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
           {children}
-        </main>
-      </div>
+        </div>
+
+        {/* Mobile Spacer (for bottom menu if needed) */}
+        <div className="h-20 lg:hidden" />
+      </main>
     </div>
   );
 }

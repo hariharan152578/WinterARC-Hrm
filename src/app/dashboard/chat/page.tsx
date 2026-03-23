@@ -21,10 +21,10 @@ export default function ChatPage() {
   const selectedChatId = selectedUser ? `user_${selectedUser.id}` : selectedGroup ? `group_${selectedGroup.id}` : null;
 
   return (
-    <div className="flex bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden h-[calc(100vh-200px)]">
+    <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-[calc(100vh-80px)]">
       {/* Sidebar - Contacts & Groups */}
-      <ChatSidebar 
-        onSelectUser={handleSelectUser} 
+      <ChatSidebar
+        onSelectUser={handleSelectUser}
         onSelectGroup={handleSelectGroup}
         selectedChatId={selectedChatId}
       />
@@ -32,9 +32,9 @@ export default function ChatPage() {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col bg-gray-50/50">
         {selectedUser || selectedGroup ? (
-          <ChatArea 
-            user={selectedUser} 
-            group={selectedGroup} 
+          <ChatArea
+            user={selectedUser}
+            group={selectedGroup}
           />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8 text-center">

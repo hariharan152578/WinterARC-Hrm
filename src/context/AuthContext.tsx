@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { User } from "@/types/auth.types";
+export type { User };
 import { loginUser } from "@/services/auth.service";
 import { LoginResponse } from "@/types/auth.types";
 import io from "socket.io-client";
@@ -17,7 +18,7 @@ interface AuthContextType {
     personId: string | null,
     password: string
   ) => Promise<LoginResponse>;
-  logout: () => void;
+  logout: (options?: { isAuto?: boolean }) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -85,6 +86,28 @@ export const AuthProvider = ({
     setLoading(false);
   }, []);
 
+  // 🕒 8-HOUR AUTO-LOGOUT TIMER
+  useEffect(() => {
+    if (!token || !user) return;
+
+    const checkSession = () => {
+      const loginTime = localStorage.getItem("loginTime");
+      if (!loginTime) return;
+
+      const startTime = parseInt(loginTime);
+      const now = Date.now();
+      const eightHoursInMs = 8 * 60 * 60 * 1000;
+
+      if (now - startTime >= eightHoursInMs) {
+        console.log("⏰ 8 hours passed. Automatic logout initiated.");
+        logout({ isAuto: true });
+      }
+    };
+
+    const interval = setInterval(checkSession, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, [token, user]);
+
   const login = async (
     email: string | null,
     personId: string | null,
@@ -97,13 +120,32 @@ export const AuthProvider = ({
 
     localStorage.setItem("token", data.token);
     localStorage.setItem("user", JSON.stringify(data.user));
+    localStorage.setItem("loginTime", Date.now().toString());
 
     initSocket(data.token);
 
     return data;
   };
 
-  const logout = () => {
+  const logout = async (options?: { isAuto?: boolean }) => {
+    const isAuto = options?.isAuto || false;
+
+    try {
+      const storedToken = localStorage.getItem("token");
+      if (storedToken) {
+        await fetch("http://localhost:5000/api/auth/logout", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${storedToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ isAuto })
+        });
+      }
+    } catch (err) {
+      console.error("Logout backend call failed", err);
+    }
+
     if (socket) {
       socket.disconnect();
       setSocket(null);

@@ -1,308 +1,213 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import Skeleton from "@/components/ui/Skeleton";
-import {
-  ChevronRight,
-  Users,
-  UserPlus,
-  Trash2,
-  Coffee,
-  Search,
-  LayoutGrid,
-  ShieldAlert
-} from "lucide-react";
-import FormInput from "@/components/ui/FormInput";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { getHierarchyUsers, createSubUser } from "@/services/user.service";
-import api from "@/lib/axios";
-import toast from "react-hot-toast";
-
-/* ===============================
-   TYPES
-================================ */
-type ManagerForm = {
-  personId: string;
-  name: string;
-  email: string;
-  phone: string;
-  department: string;
-  password: string;
-};
-
-const initialFormState: ManagerForm = {
-  personId: "",
-  name: "",
-  email: "",
-  phone: "",
-  department: "",
-  password: "",
-};
-
-/* ===============================
-   STAT CARD COMPONENT
-================================ */
-function StatCard({ title, value, color, icon }: any) {
-  return (
-    <div className={`${color} rounded-[2rem] relative flex flex-col justify-between h-44 transition-all hover:scale-[1.02] shadow-sm`}>
-      <div className="p-2 bg-white/40 w-fit rounded-lg shadow-sm">
-        {icon}
-      </div>
-      <div>
-        <span className="text-xs font-semibold text-gray-700 block mb-1 uppercase tracking-tight">
-          {title}
-        </span>
-        <span className="text-4xl font-bold text-gray-900">
-          {value}
-        </span>
-      </div>
-      <button className="absolute bottom-6 right-6 p-1.5 bg-white/60 rounded-full border border-white/20">
-        <ChevronRight size={16} />
-      </button>
-    </div>
-  );
-}
+import { getHierarchyUsers } from "@/services/user.service";
+import { getUserProfile } from "@/services/profile.service";
+import { getMyTasks } from "@/services/dashboard.service";
+import DashboardBanner from "@/components/dashboard/DashboardBanner";
+import TaskOverviewWidget from "@/components/dashboard/TaskOverviewWidget";
+import RightPanel from "@/components/dashboard/RightPanel";
+import { Sparkles, RefreshCw, Users, ShieldAlert, Coffee, LayoutGrid, ChevronRight } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 export default function AdminDashboardPage() {
-  const containerRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
-
   const [users, setUsers] = useState<any[]>([]);
-  const [search, setSearch] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<ManagerForm>(initialFormState);
-  const [time, setTime] = useState(new Date());
 
-  /* ================= CLOCK & GREETING ================= */
-  useEffect(() => {
-    const interval = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const getGreeting = () => {
-    const hour = time.getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 17) return "Good Afternoon";
-    return "Good Evening";
-  };
-
-  /* ================= FETCH DATA ================= */
-  const fetchUsers = async () => {
+  const fetchData = async () => {
     try {
-      const res = await getHierarchyUsers();
-      setUsers(res.data);
-    } catch {
-      toast.error("Failed to load hierarchy");
+      const [hierarchyRes, profileData, tasksData] = await Promise.all([
+        getHierarchyUsers(),
+        getUserProfile(Number(user?.id)),
+        getMyTasks()
+      ]);
+      setUsers(hierarchyRes.data);
+      setProfile(profileData);
+      setTasks(tasksData);
+    } catch (err) {
+      console.error("❌ Failed to fetch admin dashboard data", err);
+      toast.error("Failed to load dashboard data");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    const load = async () => {
-      await fetchUsers();
-      setLoading(false);
-    };
-    if (user) load();
+    if (user?.id) fetchData();
   }, [user]);
 
-  /* ================= ANIMATION ================= */
-  useEffect(() => {
-    if (!loading && containerRef.current) {
-      gsap.from(".animate-section", {
-        y: 20,
-        opacity: 0,
-        duration: 0.5,
-        stagger: 0.1,
-        ease: "power2.out"
-      });
-    }
-  }, [loading]);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="w-10 h-10 text-[#00A884] animate-spin" />
+          <p className="text-gray-500 font-bold animate-pulse">Loading Admin Console...</p>
+        </div>
+      </div>
+    );
+  }
 
   const managers = users.filter((u) => u.role === "MANAGER");
   const teamLeads = users.filter((u) => u.role === "TEAMLEAD");
   const employees = users.filter((u) => u.role === "EMPLOYEE");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (Object.values(formData).some(val => !val)) {
-      toast.error("Please fill all fields ⚠️");
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      await createSubUser({ role: "MANAGER", ...formData });
-      toast.success("Manager Created Successfully ✅");
-      setFormData(initialFormState);
-      await fetchUsers();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Error");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-        <Skeleton className="h-44 w-full rounded-[2rem]" />
-        <Skeleton className="h-44 w-full rounded-[2rem]" />
-        <Skeleton className="h-44 w-full rounded-[2rem]" />
-      </div>
-    );
-  }
+  const statItems = [
+    {
+      label: "Managers",
+      value: managers.length,
+      icon: ShieldAlert,
+      color: "text-purple-600",
+      bgColor: "bg-purple-50"
+    },
+    {
+      label: "Team Leads",
+      value: teamLeads.length,
+      icon: Users,
+      color: "text-orange-600",
+      bgColor: "bg-orange-50"
+    },
+    {
+      label: "Employees",
+      value: employees.length,
+      icon: Coffee,
+      color: "text-emerald-600",
+      bgColor: "bg-emerald-50"
+    },
+    {
+      label: "Total Staff",
+      value: users.length,
+      icon: LayoutGrid,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50"
+    },
+  ];
 
   return (
-    <div ref={containerRef} className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex flex-col xl:flex-row min-h-screen bg-[#F9FBFB]">
+      {/* MAIN CONTENT COLUMN */}
+      <div className="flex-1 p-4 md:p-6 lg:p-7 space-y-7 max-w-[1400px]">
 
-      {/* HEADER */}
-      <div className="animate-section bg-white rounded-[2.5rem] p-8 md:p-10 flex flex-col md:flex-row justify-between items-center shadow-sm border border-gray-100">
-        <div>
-          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Administrator Control</h2>
-          <h1 className="text-3xl font-bold text-gray-900">{getGreeting()}, {user?.name?.split(" ")[0]}</h1>
-        </div>
-        <div className="mt-4 md:mt-0 text-center md:text-right">
-          <h1 className="text-5xl font-black text-gray-900 tracking-tighter">
-            {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })}
-          </h1>
-          <p className="text-gray-400 text-sm">{time.toLocaleDateString(undefined, { dateStyle: 'full' })}</p>
-        </div>
-      </div>
-
-      {/* STATS SECTION */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-section">
-        <StatCard title="Managers" value={managers.length} color="bg-[#E0D7FF]" icon={<ShieldAlert size={18} className="text-purple-600" />} />
-        <StatCard title="TeamLeads" value={teamLeads.length} color="bg-[#FDE2D1]" icon={<Users size={18} className="text-orange-600" />} />
-        <StatCard title="Employees" value={employees.length} color="bg-[#D1FADF]" icon={<Coffee size={18} className="text-emerald-600" />} />
-        <StatCard title="Total Staff" value={users.length} color="bg-[#D1E9FF]" icon={<LayoutGrid size={18} className="text-blue-600" />} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-        {/* CREATE MANAGER FORM */}
-        <div className="lg:col-span-7 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-50 animate-section">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-blue-50 rounded-lg text-black/80">
-              <UserPlus size={24} />
-            </div>
-            <h3 className="text-xl font-bold">Register Manager</h3>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormInput label="Person ID" name="personId" value={formData.personId} onChange={handleChange} />
-              <FormInput label="Full Name" name="name" value={formData.name} onChange={handleChange} />
-              <FormInput label="Email Address" name="email" value={formData.email} onChange={handleChange} />
-              <FormInput label="Phone Number" name="phone" value={formData.phone} onChange={handleChange} />
-              <FormInput label="Department" name="department" value={formData.department} onChange={handleChange} />
-              <FormInput label="Access Password" type="password" name="password" value={formData.password} onChange={handleChange} />
-            </div>
-
-            <button 
-              type="submit" 
-              disabled={isSubmitting} 
-              className="w-full mt-4 py-3 bg-black text-white rounded-4xl font-bold transition-all "
-            >
-              {isSubmitting ? "Generating Account..." : "Create Manager Account"}
-            </button>
-          </form>
-        </div>
-
-        {/* HIERARCHY LIST */}
-        <div className="lg:col-span-5 bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-50 animate-section relative overflow-hidden">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-lg">Local Hierarchy</h3>
-            <span className="text-[10px] bg-gray-100 px-2 py-1 rounded-full font-bold text-gray-500 uppercase">Real-time</span>
-          </div>
-
-          <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+        {/* TOP SEARCH & ACTION */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="relative flex-1 max-w-sm">
             <input
               type="text"
-              placeholder="Search by name..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-2xl text-sm focus:outline-none focus:ring-2 ring-blue-100"
+              placeholder="Search assets or users..."
+              className="w-full pl-12 pr-6 py-4 bg-white rounded-2xl border border-gray-100 shadow-sm focus:ring-2 focus:ring-[#E0F2F1] focus:border-[#00A884] transition-all outline-none text-sm font-bold text-gray-500"
             />
+            <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
           </div>
-
-          <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-            {users
-              .filter((u) => u.name.toLowerCase().includes(search.toLowerCase()))
-              .map((u) => (
-                <div key={u.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl hover:bg-white hover:shadow-md hover:ring-1 ring-gray-100 transition-all group">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 px-3 py-2 rounded-full bg-white flex items-center justify-center font-bold text-gray-400 shadow-sm`}>
-                      {u.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">{u.name}- ({u.role})</p>
-                      <p className={`text-[10px] text-gray-400 font-bold tracking-widest 
-                        ${u.email === 'MANAGER' ? 'text-gray-500' : 'text-gray-400'}`}>
-                        {u.email}
-                      </p>
-                    </div>
-                  </div>
-
-                  {u.role === "MANAGER" && (
-                    <button 
-                      onClick={() => setConfirmDelete(u.id)}
-                      className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  )}
-                </div>
-              ))}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => { setLoading(true); fetchData(); }}
+              className="p-4 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all active:scale-95 group"
+            >
+              <RefreshCw className="w-5 h-5 text-gray-400 group-hover:text-[#00A884] group-hover:rotate-180 transition-all duration-500" />
+            </button>
+            <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black">
+                {user?.name?.charAt(0)}
+              </div>
+              <div className="pr-4">
+                <p className="text-xs font-black text-gray-900 leading-none">{user?.name}</p>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">System {user?.role}</p>
+              </div>
+            </div>
           </div>
+        </div>
 
-          {/* DELETE CONFIRMATION MODAL */}
-          {confirmDelete && (
-            <div className="absolute inset-0 bg-white/95 backdrop-blur-sm flex items-center justify-center p-6 z-10 transition-all">
-              <div className="text-center w-full">
-                <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ShieldAlert size={32} />
-                </div>
-                <h4 className="text-xl font-bold text-gray-900 mb-2">Delete Manager?</h4>
-                <p className="text-sm text-gray-500 mb-8">Deleting a manager will disrupt the reporting lines for their assigned TeamLeads.</p>
-                <div className="flex flex-col gap-3">
-                  <button
-                    onClick={async () => {
-                      try {
-                        await api.delete(`/users/${confirmDelete}`);
-                        toast.success("Manager account purged ✅");
-                        await fetchUsers();
-                      } catch (err: any) {
-                        toast.error(err?.response?.data?.message || "Delete failed");
-                      } finally {
-                        setConfirmDelete(null);
-                      }
-                    }}
-                    className="w-full py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 shadow-lg shadow-red-100"
-                  >
-                    Confirm Deletion
-                  </button>
-                  <button 
-                    onClick={() => setConfirmDelete(null)} 
-                    className="w-full py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200"
-                  >
-                    Cancel
-                  </button>
+        {/* ADMIN BANNER */}
+        <DashboardBanner
+          userName={user?.name || "Admin"}
+          isLoggedIn={true}
+          onToggleAttendance={() => { }}
+          tasksCompleted={users.length} // Just a placeholder stat for now
+        />
+
+        {/* QUICK STATS */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {statItems.map((item, idx) => (
+            <div key={idx} className="bg-white p-6 rounded-4xl border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-500 group relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-full -mr-12 -mt-12 group-hover:bg-indigo-50 transition-colors" />
+              <div className={`relative z-10 w-14 h-14 rounded-2xl ${item.bgColor} ${item.color} flex items-center justify-center mb-5 group-hover:scale-110 group-hover:rotate-3 transition-all shadow-sm`}>
+                <item.icon size={26} fill={item.bgColor.replace('bg-', 'var(--') + '-600)' /* heuristic */} />
+              </div>
+              <div className="relative z-10">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none mb-3">{item.label}</p>
+                <div className="flex items-end gap-2">
+                  <p className="text-3xl font-black text-slate-900 tracking-tight">{item.value}</p>
+                  <span className="text-[10px] font-black text-emerald-500 mb-1.5 flex items-center gap-1">+12%</span>
                 </div>
               </div>
             </div>
-          )}
+          ))}
         </div>
 
+        {/* TASK OVERVIEW WIDGET */}
+        <TaskOverviewWidget tasks={tasks} title="My Assignments" />
+
+        {/* NEXUS PULSE (HIERARCHY OVERVIEW) */}
+        <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none">
+            <LayoutGrid size={200} />
+          </div>
+
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 relative z-10">
+            <div>
+              <h3 className="text-2xl font-black text-slate-900 tracking-tight">Organization Nexus</h3>
+              <p className="text-sm text-slate-400 font-bold mt-1.5 flex items-center gap-2">
+                <Users size={16} className="text-indigo-600" />
+                Monitoring {users.length} active nodes across 4 tiers
+              </p>
+            </div>
+            <button className="flex items-center justify-center gap-3 bg-slate-900 hover:bg-black text-white px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-xl shadow-slate-200">
+              View Full Topology <ChevronRight size={16} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10">
+            {users.slice(0, 6).map((u) => (
+              <div key={u.id} className="flex items-center justify-between p-5 bg-slate-50/50 hover:bg-white rounded-3xl border border-transparent hover:border-slate-100 hover:shadow-xl hover:shadow-indigo-500/5 transition-all group">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center font-black text-slate-400 shadow-sm border border-slate-100 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                      {u.name.charAt(0)}
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-slate-800 tracking-tight">{u.name}</p>
+                    <p className="text-[10px] text-slate-400 font-bold mt-0.5">{u.email}</p>
+                  </div>
+                </div>
+                <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-xs
+                       ${u.role === 'MANAGER' ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                    u.role === 'TEAMLEAD' ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                      'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                  {u.role}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-4 opacity-50">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Copyright © 2024 WinterArc Admin.</p>
+        </div>
       </div>
+
+      {/* RIGHT PANEL (Tenant Messenger) */}
+      <RightPanel
+        user={user}
+        profile={profile}
+        recentLogs={[]}
+        efficiency={100}
+        efficiencyLogs={[]}
+      />
     </div>
   );
 }

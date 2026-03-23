@@ -401,8 +401,14 @@ import {
   Settings,
   X,
   LogOut,
-  Menu, // Added for potential mobile menu toggle
+  Menu,
+  ClipboardList,
+  Gift,
+  Briefcase,
+  Calendar,
+  ClipboardList as ReportIcon,
 } from "lucide-react";
+import DailyReportModal from "@/components/dashboard/DailyReportModal";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -412,6 +418,7 @@ export default function Navbar() {
   const [profile, setProfile] = useState<any>(null);
   const [open, setOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -428,7 +435,7 @@ export default function Navbar() {
 
   const profileImage = profile?.profileImage
     ? `http://localhost:5000/${profile.profileImage}`
-    : "/avatar.png";
+    : "https://res.cloudinary.com/dlb52kdyx/image/upload/v1774179997/0185e4c0175af1347a02a9a814ede0e2-removebg-preview_b2rhgy.png";
 
   const confirmLogout = () => {
     logout();
@@ -449,11 +456,14 @@ export default function Navbar() {
   const allMenu = [
     { name: "Overview", path: "/dashboard", icon: LayoutDashboard, roles: ["SUPER_ADMIN", "MASTER_ADMIN", "ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
     { name: "Chat", path: "/dashboard/chat", icon: MessageSquare, roles: ["SUPER_ADMIN", "MASTER_ADMIN", "ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
-    { name: "Tasks", path: "/dashboard/assign", icon: Users, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
-    { name: "Event planner", path: "/dashboard/events", icon: CalendarCheck, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
     { name: "Inbox", path: "/dashboard/request", icon: Mail, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
+    { name: "Tasks", path: "/dashboard/assign", icon: ClipboardList, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
+    { name: "Event planner", path: "/dashboard/events", icon: CalendarCheck, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
+    { name: "Projects", path: "/dashboard/projects", icon: Briefcase, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
+    { name: "Leaves", path: "/dashboard/leaves", icon: Calendar, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
     { name: "Organization", path: "/dashboard/organization", icon: Users, roles: ["ADMIN", "MANAGER", "TEAMLEAD"] },
-    { name: "Reports", path: "/dashboard/daily-work", icon: Settings, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
+    { name: "Performance", path: "/dashboard/efficiency", icon: Settings, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
+    { name: "Reports", path: "/dashboard/daily-work", icon: ClipboardList, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
   ];
 
   const menu = allMenu.filter((item) => item.roles.includes(user?.role as string));
@@ -497,7 +507,29 @@ export default function Navbar() {
                 </div>
                 <div className="border-t border-gray-100 mt-4 pt-2">
                   <button
-                    onClick={() => { setShowLogoutModal(true); setOpen(false); }}
+                    onClick={async () => {
+                      setOpen(false);
+                      if (!user) return;
+                      
+                      const rolesRequiringDailyReport = ["MANAGER", "TEAMLEAD", "EMPLOYEE", "MASTER_ADMIN"];
+                      const mustSubmit = rolesRequiringDailyReport.includes(user.role);
+
+                      if (mustSubmit) {
+                        try {
+                          const reports = await ReportService.getMyReports();
+                          const today = new Date().toDateString();
+                          const submittedToday = reports.some((r: any) => new Date(r.createdAt).toDateString() === today);
+                          
+                          if (!submittedToday) {
+                            setShowReportModal(true);
+                            return;
+                          }
+                        } catch (err) {
+                          console.error("Failed to check daily reports", err);
+                        }
+                      }
+                      setShowLogoutModal(true);
+                    }}
                     className="flex w-full items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                   >
                     <LogOut size={18} />
@@ -532,7 +564,7 @@ export default function Navbar() {
 
       {/* MODAL - CENTERED FOR ALL SCREENS */}
       {showLogoutModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-110 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-[340px] md:max-w-md shadow-xl animate-in fade-in zoom-in duration-200">
             <h2 className="text-lg font-semibold mb-2">Sign out?</h2>
             <p className="text-gray-500 text-sm mb-6">Are you sure you want to log out of your session?</p>
@@ -553,6 +585,17 @@ export default function Navbar() {
           </div>
         </div>
       )}
+
+      {/* DAILY REPORT MODAL */}
+      <DailyReportModal 
+        isOpen={showReportModal} 
+        onClose={() => setShowReportModal(false)} 
+        onSuccess={() => {
+          setShowReportModal(false);
+          logout();
+          router.push("/login");
+        }}
+      />
     </>
   );
 }

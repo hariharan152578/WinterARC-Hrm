@@ -1,281 +1,223 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import Skeleton from "@/components/ui/Skeleton";
-import { Users, Coffee, Trash2, ChevronRight } from "lucide-react";
-import FormInput from "@/components/ui/FormInput";
-
-import {
-  validateEmail,
-  validatePhone,
-  validatePassword,
-} from "@/utils/validation";
-
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import {
-  getHierarchyUsers,
-  createSubUser,
-  deleteSubUser,
-} from "@/services/user.service";
-import toast from "react-hot-toast";
+import { getHierarchyUsers } from "@/services/user.service";
+import { getUserProfile } from "@/services/profile.service";
+import { getMyTasks, getEmployeeDashboardStats } from "@/services/dashboard.service";
+import DashboardBanner from "@/components/dashboard/DashboardBanner";
+import TaskOverviewWidget from "@/components/dashboard/TaskOverviewWidget";
+import RightPanel from "@/components/dashboard/RightPanel";
+import { Sparkles, RefreshCw, Users, Coffee, CheckCircle, Clock, CheckCircle2, TrendingUp } from "lucide-react";
+import { toast } from "react-hot-toast";
 
-/* ===============================
-   STAT CARD
-================================ */
-function StatCard({ title, value, color, icon }: any) {
-  return (
-    <div className={`${color} p-6 rounded-[2rem] relative flex flex-col justify-between h-44 transition-transform hover:scale-[1.02]`}>
-      <div className="p-2 bg-white/40 w-fit rounded-lg shadow-sm">
-        {icon}
-      </div>
-      <div>
-        <span className="text-xs font-semibold text-gray-700 block mb-1">{title}</span>
-        <span className="text-3xl font-bold text-gray-900">{value}</span>
-      </div>
-      <button className="absolute bottom-6 right-6 p-1.5 bg-white/60 rounded-full border border-white/20">
-        <ChevronRight size={16} />
-      </button>
-    </div>
-  );
-}
+const ChevronRight = ({ size, className }: { size: number, className: string }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="m9 18 6-6-6-6" />
+  </svg>
+);
 
 export default function TeamLeadDashboardPage() {
-  const containerRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
-
+  const [stats, setStats] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [search, setSearch] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<any>({});
 
-  const [personId, setPersonId] = useState("");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [department, setDepartment] = useState("");
-
-  const [time, setTime] = useState(new Date());
-
-  /* ================= CLOCK ================= */
-  useEffect(() => {
-    const interval = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const getGreeting = () => {
-    const hour = time.getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 17) return "Good Afternoon";
-    return "Good Evening";
-  };
-
-  /* ================= FETCH ================= */
-  const fetchUsers = async () => {
-    const res = await getHierarchyUsers();
-    setUsers(res.data);
-    setEmployees(res.data.filter((u: any) => u.role === "EMPLOYEE"));
-  };
-
-  useEffect(() => {
-    const load = async () => {
-      await fetchUsers();
+  const fetchData = async () => {
+    try {
+      const [hierarchyRes, profileData, tasksData, statsData] = await Promise.all([
+        getHierarchyUsers(),
+        getUserProfile(Number(user?.id)),
+        getMyTasks(),
+        getEmployeeDashboardStats()
+      ]);
+      setUsers(hierarchyRes.data);
+      setProfile(profileData);
+      setTasks(tasksData);
+      setStats(statsData);
+    } catch (err) {
+      console.error("❌ Failed to fetch teamlead dashboard data", err);
+      toast.error("Failed to load dashboard data");
+    } finally {
       setLoading(false);
-    };
-    if (user) load();
-  }, [user]);
-
-  /* ================= ANIMATION ================= */
-  useEffect(() => {
-    if (!loading && containerRef.current) {
-      gsap.from(".animate-section", {
-        y: 30,
-        opacity: 0,
-        duration: 0.6,
-        stagger: 0.1,
-      });
     }
-  }, [loading]);
+  };
+
+  useEffect(() => {
+    if (user?.id) fetchData();
+  }, [user]);
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Skeleton className="h-64 w-full rounded-3xl" />
-        <Skeleton className="h-64 w-full rounded-3xl" />
-        <Skeleton className="h-64 w-full rounded-3xl" />
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="w-10 h-10 text-[#00A884] animate-spin" />
+          <p className="text-gray-500 font-bold animate-pulse">Initializing Team Console...</p>
+        </div>
       </div>
     );
   }
 
+  const employees = users.filter((u: any) => u.role === "EMPLOYEE");
+
+  const statItems = [
+    {
+      label: "Attendance Hours",
+      value: `${((stats?.attendance?.totalMinutesToday || 0) / 60).toFixed(2)} hrs`,
+      icon: Clock,
+      color: "text-indigo-600",
+      bgColor: "bg-indigo-50"
+    },
+    {
+      label: "My Completed Tasks",
+      value: stats?.taskCounts?.completed || 0,
+      icon: CheckCircle2,
+      color: "text-[#00A884]",
+      bgColor: "bg-[#E0F2F1]"
+    },
+    {
+      label: "Current Efficiency %",
+      value: `${stats?.efficiency?.overall || 0}%`,
+      icon: TrendingUp,
+      color: "text-violet-600",
+      bgColor: "bg-violet-50"
+    },
+    {
+      label: "My Team",
+      value: employees.length,
+      icon: Users,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50"
+    },
+    {
+      label: "Team Attendance",
+      value: "95%",
+      icon: CheckCircle,
+      color: "text-rose-600",
+      bgColor: "bg-rose-50"
+    },
+  ];
+
+  // Added missing TrendingUp import to icons if needed but it's in the statItems now
+  // We already imported CheckCircle2 and Clock above.
+
   return (
-    <div ref={containerRef} className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="flex flex-col xl:flex-row min-h-screen bg-[#F9FBFB]">
+      {/* MAIN CONTENT COLUMN */}
+      <div className="flex-1 p-4 md:p-6 lg:p-7 space-y-7 max-w-[1400px]">
 
-      {/* HEADER */}
-      <div className="animate-section">
-        <div className="relative w-full rounded-[2.5rem] p-8 flex justify-between shadow-lg">
-          <div>
-            <h2 className="text-sm text-gray-400">
-              Hello {user?.name?.split(" ")[0]} 👋
-            </h2>
-            <h1 className="text-3xl font-bold">{getGreeting()}</h1>
-          </div>
-
-          <div className="text-right">
-            <h1 className="text-5xl font-black text-gray-900 tracking-tighter">
-              {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })}
-            </h1>
-            <p className="text-gray-400 text-sm">
-              {time.toLocaleDateString(undefined, { dateStyle: "full" })}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* STATS */}
-      <div className="grid grid-cols-2 gap-4 animate-section">
-        <StatCard title="Total Employees" value={employees.length} color="bg-[#D1FADF]" icon={<Users size={16} />} />
-        <StatCard title="Active Team" value={employees.length} color="bg-[#E0D7FF]" icon={<Coffee size={16} />} />
-      </div>
-
-      {/* MAIN GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-
-        {/* CREATE EMPLOYEE */}
-        <div className="lg:col-span-8 bg-white p-8 rounded-[2.5rem] shadow-sm animate-section">
-          <h3 className="text-xl font-bold mb-6">Create New Employee</h3>
-
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-
-              let newErrors: any = {};
-              if (!personId) newErrors.personId = "Person ID required";
-              if (!name) newErrors.name = "Name required";
-              if (!department) newErrors.department = "Department required";
-              if (!validateEmail(email)) newErrors.email = "Invalid email";
-              if (!validatePhone(phone)) newErrors.phone = "Invalid phone";
-              if (!validatePassword(password))
-                newErrors.password = "Min 8 chars, 1 uppercase & 1 number required";
-              if (password !== confirmPassword)
-                newErrors.confirmPassword = "Passwords do not match";
-
-              if (Object.keys(newErrors).length > 0) {
-                setErrors(newErrors);
-                return;
-              }
-
-              try {
-                setIsSubmitting(true);
-
-                await createSubUser({
-                  role: "EMPLOYEE",
-                  personId,
-                  name,
-                  phone,
-                  email,
-                  password,
-                  department,
-                });
-
-                toast.success("Employee Created");
-
-                setPersonId("");
-                setName("");
-                setPhone("");
-                setEmail("");
-                setPassword("");
-                setConfirmPassword("");
-                setDepartment("");
-                setErrors({});
-
-                await fetchUsers();
-              } catch (err: any) {
-                toast.error(err?.response?.data?.message || "Error");
-              } finally {
-                setIsSubmitting(false);
-              }
-            }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-6"
-          >
-            <FormInput label="Person ID" name="personId" value={personId} onChange={(e) => setPersonId(e.target.value)} error={errors.personId} />
-            <FormInput label="Full Name" name="name" value={name} onChange={(e) => setName(e.target.value)} error={errors.name} />
-            <FormInput label="Email" name="email" value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} />
-            <FormInput label="Phone" name="phone" value={phone} onChange={(e) => setPhone(e.target.value)} error={errors.phone} />
-            <FormInput label="Department" name="department" value={department} onChange={(e) => setDepartment(e.target.value)} error={errors.department} />
-            <FormInput label="Password" type="password" name="password" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} />
-            <FormInput label="Confirm Password" type="password" name="confirmPassword" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} error={errors.confirmPassword} />
-
-            <button type="submit" disabled={isSubmitting} className="bg-black text-white rounded-full py-2">
-              {isSubmitting ? "Creating..." : "Create Employee"}
-            </button>
-          </form>
-        </div>
-
-        {/* EMPLOYEE LIST */}
-        <div className="lg:col-span-4 animate-section">
-          <div className="bg-white p-6 rounded-[2.5rem] shadow-sm min-h-[500px] relative">
-            <h3 className="font-bold text-lg mb-4">My Employees</h3>
-
+        {/* TOP SEARCH & ACTION */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="relative flex-1 max-w-sm">
             <input
               type="text"
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full p-3 mb-4 bg-gray-50 rounded-xl text-sm"
+              placeholder="Search team performance..."
+              className="w-full pl-12 pr-6 py-4 bg-white rounded-2xl border border-gray-100 shadow-sm focus:ring-2 focus:ring-[#E0F2F1] focus:border-[#00A884] transition-all outline-none text-sm font-bold text-gray-500"
             />
-
-            <div className="space-y-3 max-h-[350px] overflow-y-auto">
-              {employees
-                .filter(e => e.name.toLowerCase().includes(search.toLowerCase()))
-                .map(e => (
-                  <div key={e.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
-                    <div>
-                      <p className="text-sm font-bold">{e.name}</p>
-                      <p className="text-xs text-gray-400">{e.email}</p>
-                    </div>
-                    <Trash2 size={16} className="text-red-500 cursor-pointer" onClick={() => setConfirmDelete(e.id)} />
-                  </div>
-                ))}
-            </div>
-
-            {confirmDelete && (
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-[2.5rem]">
-                <div className="bg-white p-6 rounded-2xl text-center">
-                  <p className="mb-4 font-semibold">Are you sure?</p>
-                  <div className="flex gap-4 justify-center">
-                    <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 bg-gray-200 rounded-full">
-                      Cancel
-                    </button>
-                    <button
-                      onClick={async () => {
-                        try {
-                          await deleteSubUser(confirmDelete);
-                          toast.success("Deleted ✅");
-                          await fetchUsers();
-                        } catch (err: any) {
-                          toast.error(err?.response?.data?.message || "Delete failed");
-                        } finally {
-                          setConfirmDelete(null);
-                        }
-                      }}
-                      className="px-4 py-2 bg-red-500 text-white rounded-full"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
+            <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => { setLoading(true); fetchData(); }}
+              className="p-4 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all active:scale-95 group"
+            >
+              <RefreshCw className="w-5 h-5 text-gray-400 group-hover:text-[#00A884] group-hover:rotate-180 transition-all duration-500" />
+            </button>
+            <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black">
+                {user?.name?.charAt(0)}
               </div>
-            )}
-
+              <div className="pr-4">
+                <p className="text-xs font-black text-gray-900 leading-none">{user?.name}</p>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Lead {user?.role}</p>
+              </div>
+            </div>
           </div>
         </div>
 
+        {/* TEAM LEAD BANNER */}
+        <DashboardBanner
+          userName={user?.name || "Team Lead"}
+          isLoggedIn={stats?.attendance?.isLoggedIn}
+          onToggleAttendance={() => { }}
+          tasksCompleted={stats?.taskCounts?.completed || 0}
+        />
+
+        {/* QUICK STATS */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          {statItems.map((item, idx) => (
+            <div key={idx} className="bg-white p-4 rounded-3xl border border-gray-100 shadow-xs hover:shadow-xl transition-all duration-300 group">
+              <div className={`w-10 h-10 rounded-xl ${item.bgColor} ${item.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                <item.icon size={18} />
+              </div>
+              <div>
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1.5">{item.label}</p>
+                <p className="text-xl font-black text-gray-900 tracking-tight">{item.value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* TASK OVERVIEW WIDGET */}
+        <TaskOverviewWidget tasks={tasks} title="My Assignments" />
+
+        {/* TEAM MEMBERS LIST */}
+        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+          <h3 className="text-xl font-bold text-gray-900 mb-6">Direct Reports</h3>
+          <div className="space-y-4">
+            {employees.map((e) => (
+              <div key={e.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-blue-100 transition-all group">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center font-bold text-blue-300 shadow-sm border border-gray-100">
+                    {e.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">{e.name}</p>
+                    <p className="text-xs text-gray-400 font-medium">{e.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 bg-emerald-100 text-emerald-600 rounded-lg text-[9px] font-black uppercase tracking-widest">Active</span>
+                  <button className="p-2 hover:bg-white rounded-lg transition-colors">
+                    <ChevronRight size={16} className="text-gray-300" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            {employees.length === 0 && (
+              <div className="text-center py-10">
+                <Coffee className="w-10 h-10 text-gray-100 mx-auto mb-3" />
+                <p className="text-sm text-gray-400 font-bold">No direct reports found in your unit.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-4 opacity-50">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Copyright © 2024 WinterArc TeamLead.</p>
+        </div>
       </div>
+
+      {/* RIGHT PANEL */}
+      <RightPanel
+        user={user}
+        profile={profile}
+        recentLogs={stats?.recentLogs || []}
+        efficiency={stats?.efficiency}
+        efficiencyLogs={stats?.efficiencyLogs || []}
+      />
     </div>
   );
 }
