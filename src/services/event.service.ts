@@ -8,6 +8,7 @@ export interface CreateEventPayload {
   endTime: string;
   color?: string;
   files?: File[];
+  isTeamEvent?: boolean;
 }
 
 export interface EventType {
@@ -21,7 +22,7 @@ export interface EventType {
   files: string[];
   createdBy: number;
   tenantId: number;
-  completed?: boolean;
+  isTeamEvent: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -37,6 +38,9 @@ export const EventService = {
     formData.append("startTime", payload.startTime);
     formData.append("endTime", payload.endTime);
     formData.append("color", payload.color || "");
+    if (payload.isTeamEvent !== undefined) {
+      formData.append("isTeamEvent", String(payload.isTeamEvent));
+    }
 
     if (payload.files) {
       payload.files.forEach((file) => {
@@ -69,6 +73,9 @@ export const EventService = {
     formData.append("startTime", payload.startTime);
     formData.append("endTime", payload.endTime);
     formData.append("color", payload.color || "");
+    if (payload.isTeamEvent !== undefined) {
+      formData.append("isTeamEvent", String(payload.isTeamEvent));
+    }
 
     if (payload.files) {
       payload.files.forEach((file) => {

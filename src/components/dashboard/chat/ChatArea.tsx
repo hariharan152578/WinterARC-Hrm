@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useCall } from "@/context/CallContext";
 import { getPersonalMessages, sendPersonalMessage, getGroupMessages, sendGroupMessage, getTenantMessages, sendTenantMessage, deletePersonalMessage, deleteGroupMessage, deleteTenantMessage } from "@/services/chat.service";
 import { Send, Paperclip, MoreVertical, Phone, Video, X, FileText, Download, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -13,6 +14,7 @@ interface ChatAreaProps {
 
 export default function ChatArea({ user, group }: ChatAreaProps) {
   const { user: currentUser, socket, onlineUsers } = useAuth();
+  const { initiateCall } = useCall();
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [inputText, setInputText] = useState("");
@@ -219,12 +221,22 @@ export default function ChatArea({ user, group }: ChatAreaProps) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button className="p-2 text-gray-400 hover:text-[#4db6ac] hover:bg-[#e8f5f4] rounded-xl transition-all">
-            <Phone size={18} />
-          </button>
-          <button className="p-2 text-gray-400 hover:text-[#4db6ac] hover:bg-[#e8f5f4] rounded-xl transition-all">
-            <Video size={18} />
-          </button>
+          {user && (
+            <>
+              <button 
+                onClick={() => initiateCall(user.id, 'voice', user.name)}
+                className="p-2 text-gray-400 hover:text-[#4db6ac] hover:bg-[#e8f5f4] rounded-xl transition-all"
+              >
+                <Phone size={18} />
+              </button>
+              <button 
+                onClick={() => initiateCall(user.id, 'video', user.name)}
+                className="p-2 text-gray-400 hover:text-[#4db6ac] hover:bg-[#e8f5f4] rounded-xl transition-all"
+              >
+                <Video size={18} />
+              </button>
+            </>
+          )}
           <button className="p-2 text-gray-400 hover:text-[#4db6ac] hover:bg-[#e8f5f4] rounded-xl transition-all">
             <MoreVertical size={18} />
           </button>

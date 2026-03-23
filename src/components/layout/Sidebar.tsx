@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 
 export default function Sidebar() {
-  const { user, logout } = useAuth();
+  const { user, logout, notifications, clearNotification } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -73,7 +73,7 @@ export default function Sidebar() {
     // --- TRACKING ---
     { name: "Performance", path: "/dashboard/efficiency", icon: Settings, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
     { name: "Session Logs", path: "/dashboard/settings/session-logs", icon: Clock, roles: ["SUPER_ADMIN", "MASTER_ADMIN", "ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
-    { name: "Projects", path: "/dashboard/projects", icon: Briefcase, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
+    // { name: "Projects", path: "/dashboard/projects", icon: Briefcase, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
     { name: "Event Planner", path: "/dashboard/events", icon: Calendar, roles: ["ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"] },
   ];
 
@@ -119,7 +119,7 @@ export default function Sidebar() {
         </div>
 
         {/* USER PROFILE CARD (Top style) */}
-        <div className="px-5 py-3">
+        <div className="px-5 py-3" onClick={() => router.push("/dashboard/profile")}>
           <div className="bg-[#F9FBFB] p-3 rounded-2xl border border-gray-50 flex items-center gap-3 relative group cursor-pointer hover:border-emerald-100 transition-all">
             <div className="relative shrink-0">
               <img src={profileImage} className="w-10 h-10 rounded-xl object-cover ring-2 ring-white" alt="Profile" />
@@ -138,27 +138,48 @@ export default function Sidebar() {
           {menu.map((item) => {
             const active = pathname === item.path;
             const Icon = item.icon;
+
+            // 🔔 Map notification types to menu item names
+            const notificationMap: Record<string, string[]> = {
+              "Chat": ["CHAT", "GROUP_CHAT"],
+              "Inbox": ["REQUEST"],
+              "Daily Reports": ["DAILY_REPORT"],
+              "Leave Management": ["LEAVE"]
+            };
+
+            const relevantTypes = notificationMap[item.name] || [];
+            const count = relevantTypes.reduce((acc, type) => acc + (notifications[type] || 0), 0);
+
             return (
               <Link
                 key={item.path}
                 href={item.path}
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  setIsOpen(false);
+                  relevantTypes.forEach(type => clearNotification(type));
+                }}
                 className={`
-                  flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-[12px] font-bold transition-all group
+                  flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-[12px] font-bold transition-all group relative
                   ${active
                     ? "bg-[#E0F2F1] text-[#00A884] border-l-4 border-[#00A884]"
                     : "text-gray-400 hover:bg-gray-50 hover:text-gray-900"}
                 `}
               >
                 <Icon className={`w-4.5 h-4.5 ${active ? "text-[#00A884]" : "text-gray-300 group-hover:text-gray-600"}`} />
-                {item.name}
+                <span className="flex-1">{item.name}</span>
+
+                {count > 0 && !active && (
+                  <span className="absolute right-4 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-black text-white shadow-lg shadow-rose-200 animate-in zoom-in duration-300">
+                    {count > 9 ? "9+" : count}
+                  </span>
+                )}
               </Link>
             );
           })}
         </nav>
 
         {/* LEVEL UP PROMO CARD */}
-        <div className="p-5 mt-auto">
+        {/* <div className="p-5 mt-auto">
           <div className="bg-linear-to-br from-[#E0F2F1] to-white p-5 rounded-3xl border border-emerald-50 relative overflow-hidden group shadow-sm">
             <div className="relative z-10 space-y-2">
               <h4 className="text-[12px] font-black text-emerald-900 leading-tight">Level up your HR System</h4>
@@ -169,14 +190,14 @@ export default function Sidebar() {
             </div>
             <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-200/20 rounded-full -mr-8 -mt-8 group-hover:scale-125 transition-transform duration-700" />
           </div>
-        </div>
+        </div> */}
 
         {/* LOGOUT BUTTON */}
         <div className="px-5 pb-5 pt-1">
           <button
             onClick={async () => {
               if (!user) return;
-              
+
               const rolesRequiringDailyReport = ["MANAGER", "TEAMLEAD", "EMPLOYEE", "MASTER_ADMIN"];
               const mustSubmit = rolesRequiringDailyReport.includes(user.role);
 
@@ -185,7 +206,7 @@ export default function Sidebar() {
                   const reports = await ReportService.getMyReports();
                   const today = new Date().toDateString();
                   const submittedToday = reports.some((r: any) => new Date(r.createdAt).toDateString() === today);
-                  
+
                   if (!submittedToday) {
                     setShowReportModal(true);
                     return;
@@ -236,9 +257,9 @@ export default function Sidebar() {
       )}
 
       {/* DAILY REPORT MODAL */}
-      <DailyReportModal 
-        isOpen={showReportModal} 
-        onClose={() => setShowReportModal(false)} 
+      <DailyReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
         onSuccess={() => {
           setShowReportModal(false);
           logout();

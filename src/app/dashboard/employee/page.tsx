@@ -11,7 +11,7 @@ import { Sparkles, RefreshCw, Clock, CheckCircle2, TrendingUp, Users, Calendar }
 import { toast } from "react-hot-toast";
 
 export default function EmployeeDashboardPage() {
-  const { user } = useAuth();
+  const { user, onlineUsers } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [tasks, setTasks] = useState<any[]>([]);
@@ -66,25 +66,27 @@ export default function EmployeeDashboardPage() {
       bgColor: "bg-[#E0F2F1]"
     },
     {
-      label: "Current Efficiency %",
-      value: `${stats?.efficiency || 0}%`,
-      icon: TrendingUp,
-      color: "text-violet-600",
-      bgColor: "bg-violet-50"
-    },
-    {
       label: "Team Availability",
-      value: "12 / 15",
+      value: `${stats?.teamAvailability?.online || 0} / ${stats?.teamAvailability?.total || 15}`,
       icon: Users,
       color: "text-blue-600",
       bgColor: "bg-blue-50"
     },
     {
       label: "Upcoming Schedule",
-      value: "Next Event",
+      value: stats?.nextEvent ? (
+        <span className="truncate max-w-[150px] inline-block">{stats.nextEvent.title}</span>
+      ) : "No Events",
       icon: Calendar,
       color: "text-rose-600",
       bgColor: "bg-rose-50"
+    },
+    {
+      label: "Current Efficiency",
+      value: `${stats?.efficiency?.day || 0}%`,
+      icon: TrendingUp,
+      color: "text-violet-600",
+      bgColor: "bg-violet-50"
     },
   ];
 

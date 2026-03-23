@@ -982,10 +982,13 @@ import { useEffect, useState, useMemo } from "react";
 import { EventService, EventType } from "@/services/event.service";
 import {
   Plus, Calendar as CalendarIcon, Search, X, ChevronLeft, ChevronRight,
-  CalendarDays, Clock, AlignLeft
+  CalendarDays, Clock, AlignLeft, Users
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import toast from "react-hot-toast";
 
 export default function EventsPage() {
+  const { user: currentUser } = useAuth();
   const [events, setEvents] = useState<EventType[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -995,6 +998,7 @@ export default function EventsPage() {
     title: "", description: "",
     date: new Date().toISOString().split('T')[0],
     startTime: "", endTime: "", color: "#6366f1",
+    isTeamEvent: false,
   });
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -1013,7 +1017,11 @@ export default function EventsPage() {
   useEffect(() => { fetchEvents(); }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value, type } = e.target as HTMLInputElement;
+    setForm({ 
+      ...form, 
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value 
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1023,11 +1031,17 @@ export default function EventsPage() {
       setForm({
         title: "", description: "",
         date: new Date().toISOString().split('T')[0],
-        startTime: "", endTime: "", color: "#6366f1"
+        startTime: "", endTime: "", color: "#6366f1",
+        isTeamEvent: false,
       });
       setShowAddPopup(false);
       fetchEvents();
-    } catch (err) { console.error(err); }
+      toast.success("Event created successfully!");
+    } catch (err: any) { 
+      console.error(err); 
+      const msg = err.response?.data?.error || err.response?.data?.message || "Failed to create event";
+      toast.error(msg);
+    }
   };
 
   const handleDayClick = (e: React.MouseEvent, dateStr: string) => {
@@ -1079,7 +1093,14 @@ export default function EventsPage() {
             <div className="p-6 -mt-6 bg-white rounded-t-3xl relative">
               <button onClick={() => setSelectedEvent(null)} className="absolute -top-10 right-2 p-2 text-white"><X size={20} /></button>
               <h2 className="text-xl font-bold">{selectedEvent.title}</h2>
-              <p className="text-xs text-indigo-600 font-semibold mb-4">{selectedEvent.date} | {selectedEvent.startTime}</p>
+              <div className="flex items-center gap-2 mb-4">
+                <p className="text-xs text-indigo-600 font-semibold">{selectedEvent.date} | {selectedEvent.startTime}</p>
+                {selectedEvent.isTeamEvent && (
+                  <span className="bg-indigo-100 text-indigo-700 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter flex items-center gap-1">
+                    <Users size={10} /> Team Event
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-100">{selectedEvent.description || "No description."}</p>
               <button onClick={() => setSelectedEvent(null)} className="w-full mt-6 bg-slate-900 text-white text-sm font-bold py-3 rounded-xl">Close</button>
             </div>
@@ -1132,6 +1153,23 @@ export default function EventsPage() {
                 <input type="time" name="startTime" value={form.startTime} onChange={handleChange} className="bg-slate-50 border border-slate-200 p-2 rounded-xl text-[10px]" />
                 <input type="time" name="endTime" value={form.endTime} onChange={handleChange} className="bg-slate-50 border border-slate-200 p-2 rounded-xl text-[10px]" />
               </div>
+
+              {currentUser?.role !== "EMPLOYEE" && (
+                <div className="flex items-center gap-2 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                  <input
+                    type="checkbox"
+                    name="isTeamEvent"
+                    id="isTeamEventSidebar"
+                    checked={form.isTeamEvent}
+                    onChange={handleChange}
+                    className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                  />
+                  <label htmlFor="isTeamEventSidebar" className="text-[10px] font-bold text-indigo-700 flex items-center gap-1.5 cursor-pointer">
+                    <Users size={12} /> Assign to Team
+                  </label>
+                </div>
+              )}
+
               <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-xs hover:bg-indigo-700 transition-all shadow-md">Add Event</button>
             </form>
           </div>
@@ -1192,7 +1230,10 @@ export default function EventsPage() {
                         <div key={event.id} onClick={(e) => { e.stopPropagation(); setSelectedEvent(event); }}
                           className="px-2 py-1 rounded-md text-[9px] font-bold truncate border-l-2 shadow-sm"
                           style={{ backgroundColor: `${event.color}15`, color: event.color, borderLeftColor: event.color }}>
-                          {event.title}
+                          <span className="truncate flex-1">
+                            {event.isTeamEvent && <Users size={10} className="inline mr-1 opacity-70" />}
+                            {event.title}
+                          </span>
                         </div>
                       ))}
                       {dayEvents.length > 3 && <p className="text-[8px] font-bold text-slate-400 pl-1">+{dayEvents.length - 3} more</p>}
@@ -1244,6 +1285,22 @@ export default function EventsPage() {
                   </div>
                   <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">{form.date}</span>
                 </div>
+                
+                {currentUser?.role !== "EMPLOYEE" && (
+                  <div className="flex items-center gap-2 p-3 bg-indigo-50/30 rounded-xl border border-indigo-50 mt-2">
+                    <input
+                      type="checkbox"
+                      name="isTeamEvent"
+                      id="isTeamEventPopup"
+                      checked={form.isTeamEvent}
+                      onChange={handleChange}
+                      className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                    />
+                    <label htmlFor="isTeamEventPopup" className="text-[10px] font-bold text-indigo-700 flex items-center gap-1.5 cursor-pointer">
+                      <Users size={12} /> Team Event
+                    </label>
+                  </div>
+                )}
               </div>
               <button type="submit" className="w-full bg-indigo-600 text-white py-2.5 rounded-xl text-[11px] font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 mt-2">
                 Create Event

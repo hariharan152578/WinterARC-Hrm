@@ -6,6 +6,7 @@ export type { User };
 import { loginUser } from "@/services/auth.service";
 import { LoginResponse } from "@/types/auth.types";
 import io from "socket.io-client";
+import { showBrowserNotification, requestNotificationPermission } from "@/utils/notification";
 
 interface AuthContextType {
   user: User | null;
@@ -13,6 +14,8 @@ interface AuthContextType {
   loading: boolean;
   socket: any;
   onlineUsers: Set<number>;
+  notifications: Record<string, number>;
+  clearNotification: (type: string) => void;
   login: (
     email: string | null,
     personId: string | null,
@@ -32,7 +35,15 @@ export const AuthProvider = ({
   const [token, setToken] = useState<string | null>(null);
   const [socket, setSocket] = useState<any>(null);
   const [onlineUsers, setOnlineUsers] = useState<Set<number>>(new Set());
+  const [notifications, setNotifications] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+
+  const clearNotification = (type: string) => {
+    setNotifications(prev => ({
+      ...prev,
+      [type]: 0
+    }));
+  };
 
   const initSocket = (token: string) => {
     try {
@@ -67,6 +78,67 @@ export const AuthProvider = ({
         });
       });
 
+      // 🔔 NOTIFICATION LISTENERS
+      s.on("notification:new", (data: any) => {
+        setNotifications(prev => ({
+          ...prev,
+          [data.type]: (prev[data.type] || 0) + 1
+        }));
+        showBrowserNotification(data.title || "New Notification", {
+          body: data.message || "You have a new notification in the system.",
+        });
+      });
+
+      s.on("personal:new-message", (data: any) => {
+        // If we're not on the chat page with this user, increment chat notification
+        // Note: Actual 'active chat' check usually happens in a ChatContext, 
+        // but here we just increment a global 'CHAT' unread count.
+        
+        // Prevent notification if it's our own message
+        const userStr = localStorage.getItem("user");
+        const currentUser = userStr ? JSON.parse(userStr) : null;
+        if (currentUser && data.senderId === currentUser.id) return;
+
+        setNotifications(prev => ({
+          ...prev,
+          CHAT: (prev.CHAT || 0) + 1
+        }));
+        const senderName = data.sender?.name || "Someone";
+        showBrowserNotification(`New message from ${senderName}`, {
+          body: data.content || "Sent an attachment",
+        });
+      });
+
+      s.on("group:new-message", (data: any) => {
+        const userStr = localStorage.getItem("user");
+        const currentUser = userStr ? JSON.parse(userStr) : null;
+        if (currentUser && data.senderId === currentUser.id) return;
+
+        setNotifications(prev => ({
+          ...prev,
+          GROUP_CHAT: (prev.GROUP_CHAT || 0) + 1
+        }));
+        const senderName = data.sender?.name || "Someone";
+        showBrowserNotification(`New message in group`, {
+          body: `${senderName}: ${data.content || "Sent an attachment"}`,
+        });
+      });
+
+      s.on("tenant:message", (data: any) => {
+        const userStr = localStorage.getItem("user");
+        const currentUser = userStr ? JSON.parse(userStr) : null;
+        if (currentUser && data.senderId === currentUser.id) return;
+
+        setNotifications(prev => ({
+          ...prev,
+          GROUP_CHAT: (prev.GROUP_CHAT || 0) + 1
+        }));
+        const senderName = data.user?.name || data.sender?.name || "Someone";
+        showBrowserNotification(`Workspace Announcement`, {
+          body: `${senderName}: ${data.content || "Sent an attachment"}`,
+        });
+      });
+
       setSocket(s);
     } catch (err) {
       console.error("Socket init failed", err);
@@ -74,6 +146,8 @@ export const AuthProvider = ({
   };
 
   useEffect(() => {
+    requestNotificationPermission();
+
     const storedToken = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
 
@@ -161,9 +235,11 @@ export const AuthProvider = ({
     loading,
     socket,
     onlineUsers,
+    notifications,
+    clearNotification,
     login,
     logout
-  }), [user, token, loading, socket, onlineUsers]);
+  }), [user, token, loading, socket, onlineUsers, notifications]);
 
   return (
     <AuthContext.Provider value={value}>

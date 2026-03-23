@@ -33,6 +33,9 @@ export const getHierarchyUsers = () =>
 export const getMyTeam = () =>
   api.get("/users/my-team");
 
+export const getTeamDetailedStats = () =>
+  api.get("/users/team-details");
+
 export const getMySessions = () => api.get("/users/my-sessions");
 
 // 🔵 DASHBOARD

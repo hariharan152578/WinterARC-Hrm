@@ -14,6 +14,11 @@ export type EmployeeDashboardStats = {
   recentLogs: any[];
   efficiency: number;
   efficiencyLogs: any[];
+  teamAvailability: {
+    online: number;
+    total: number;
+  };
+  nextEvent: any;
 };
 
 export const getEmployeeDashboardStats = async (): Promise<EmployeeDashboardStats> => {

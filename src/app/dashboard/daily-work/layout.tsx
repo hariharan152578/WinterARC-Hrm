@@ -2,28 +2,30 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 export default function DailyWorkLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user } = useAuth();
   const pathname = usePathname();
 
-  const tabs = [
+  const allTabs = [
     {
       name: "Inbox",
       href: "/dashboard/daily-work/inbox",
+      roles: ["MASTER_ADMIN", "ADMIN", "MANAGER", "TEAMLEAD"],
     },
     {
       name: "My Reports",
       href: "/dashboard/daily-work/my-reports",
-    },
-    {
-      name: "Submit",
-      href: "/dashboard/daily-work/submit",
-    },
+      roles: ["MASTER_ADMIN", "ADMIN", "MANAGER", "TEAMLEAD", "EMPLOYEE"],
+    }
   ];
+
+  const tabs = allTabs.filter(tab => tab.roles.includes(user?.role || ""));
 
   return (
     <div className="p-6">
@@ -33,13 +35,13 @@ export default function DailyWorkLayout({
         <h1 className="text-2xl font-bold">
           Daily Work Reports
         </h1>
-        <p className="text-gray-500">
+        <p className="text-gray-500 text-sm font-medium">
           Manage and view daily work submissions
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b mb-6">
+      <div className="flex gap-4 border-b mb-6 overflow-x-auto scrollbar-hide">
 
         {tabs.map((tab) => {
           const active = pathname.startsWith(tab.href);
@@ -48,11 +50,11 @@ export default function DailyWorkLayout({
             <Link
               key={tab.href}
               href={tab.href}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition
+              className={`px-4 py-2 text-sm font-black whitespace-nowrap border-b-2 transition-all duration-300
                 ${
                   active
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-black"
+                    ? "border-[#00A884] text-[#00A884]"
+                    : "border-transparent text-gray-400 hover:text-gray-700"
                 }`}
             >
               {tab.name}
