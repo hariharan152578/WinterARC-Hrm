@@ -229,7 +229,7 @@ export default function OrganizationHierarchy() {
       email: curr.email || `${curr.name.toLowerCase().replace(' ', '.')}@winterarc.com`,
       phone: curr.phone || "+1 (555) 001-9922",
       employeeCount: children.length,
-      image: curr.profileImage ? `http://localhost:5000/${curr.profileImage}` : "",
+      image: curr.profileImage ? `${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${curr.profileImage}` : "",
       subDepartments: subNodes,
     };
   };

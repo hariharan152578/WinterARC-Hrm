@@ -12,8 +12,11 @@ import {
   ChevronLeft,
   ArrowUpDown,
   Wrench,
-  Clock
+  Clock,
+  Trash2
 } from "lucide-react";
+import toast from "react-hot-toast";
+import RequestService from "@/services/request.service";
 
 /* ================= TYPES ================= */
 interface User {
@@ -39,7 +42,7 @@ const ITEMS_PER_PAGE = 8;
 /* ================= COMPONENTS ================= */
 
 const Avatar = ({ name, initials, color, src }: { name: string, initials: string, color: string, src?: string }) => {
-  const imgUrl = src ? (src.startsWith('http') ? src : `http://localhost:5000/${src}`) : null;
+  const imgUrl = src ? (src.startsWith('http') ? src : `${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${src}`) : null;
   
   return (
     <div className="flex items-center gap-3">
@@ -97,6 +100,18 @@ export default function MyRequestsPage() {
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
+
+  const handleDeleteRequest = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this request?")) return;
+    try {
+      await RequestService.deleteRequest(id);
+      toast.success("Request deleted successfully");
+      setRequests(prev => prev.filter(req => req.id !== id));
+      setSelectedRequest(null);
+    } catch (error) {
+      toast.error("Failed to delete request");
+    }
+  };
 
   /* ================= ANIMATION ================= */
   useEffect(() => {
@@ -363,12 +378,20 @@ export default function MyRequestsPage() {
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                   Submitted: {new Date(selectedRequest.createdAt).toLocaleString()}
                 </p>
-                <button
-                  onClick={() => setSelectedRequest(null)}
-                  className="px-8 py-3 bg-slate-900 text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition-all shadow-lg shadow-black/10 active:scale-95"
-                >
-                  Close Details
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleDeleteRequest(selectedRequest.id)}
+                    className="px-6 py-3 bg-rose-50 text-rose-600 rounded-xl font-bold text-xs hover:bg-rose-100 transition-all shadow-sm active:scale-95 flex items-center gap-2"
+                  >
+                    <Trash2 size={16} /> Delete
+                  </button>
+                  <button
+                    onClick={() => setSelectedRequest(null)}
+                    className="px-8 py-3 bg-slate-900 text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition-all shadow-lg shadow-black/10 active:scale-95"
+                  >
+                    Close Details
+                  </button>
+                </div>
               </div>
             </div>
           </div>

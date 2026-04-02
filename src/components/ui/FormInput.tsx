@@ -1,24 +1,26 @@
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, LucideIcon } from "lucide-react";
 
 interface Props {
   label: string;
   type?: string;
-  name: string; // Added this property
+  name: string;
   value: string | number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; // Improved type safety
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
   error?: string;
+  icon?: LucideIcon;
 }
 
 export default function FormInput({
   label,
   type = "text",
-  name, // Destructure name here
+  name,
   value,
   onChange,
   placeholder,
   error,
+  icon: Icon,
 }: Props) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -29,13 +31,18 @@ export default function FormInput({
       <label className="text-xs text-gray-400 ml-1">{label}</label>
 
       <div className="relative">
+        {Icon && (
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+            <Icon size={18} />
+          </div>
+        )}
         <input
-          name={name} // Pass name to the input
+          name={name}
           type={isPassword && showPassword ? "text" : type}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className={`w-full p-3 rounded-xl text-sm outline-none border transition-all ${
+          className={`w-full ${Icon ? 'pl-11 pr-4' : 'p-3'} py-3 rounded-xl text-sm outline-none border transition-all ${
             error
               ? "border-red-500 bg-red-50/30"
               : "border-gray-200 focus:border-purple-400 focus:ring-1 ring-purple-100"

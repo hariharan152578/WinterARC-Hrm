@@ -21,13 +21,7 @@ export default function DashboardBanner({
       <div className="absolute top-0 right-0 w-60 h-60 bg-white/5 rounded-full -mr-30 -mt-30 blur-3xl group-hover:bg-white/10 transition-colors duration-1000" />
       <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-400/10 rounded-full -ml-24 -mb-24 blur-2xl animate-pulse" />
 
-      {/* TOP BADGE */}
-      <div className="relative z-10 flex items-center gap-2 mb-4">
-        <div className="bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 flex items-center gap-2">
-          <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
-          <span className="text-[9px] font-black text-white uppercase tracking-widest">Today's Goal: 80%</span>
-        </div>
-      </div>
+
 
       <div className="relative z-10 flex flex-col md:flex-row justify-between items-end gap-8">
         <div className="space-y-5 max-w-2xl">

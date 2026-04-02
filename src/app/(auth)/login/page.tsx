@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Lock, Mail, User, ArrowRight, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import LoginRequestModal from "@/components/auth/LoginRequestModal";
+import FormInput from "@/components/ui/FormInput";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -97,20 +98,15 @@ export default function LoginPage() {
               <div className="flex justify-between items-center ml-1">
                 <label className="text-xs font-bold text-gray-500 uppercase">Password</label>
               </div>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                  <Lock size={18} />
-                </div>
-                <input
-                  type="password"
-                  name="password" // Added
-                  autoComplete="current-password" // Added
-                  placeholder="••••••••"
-                  className="w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-2 ring-purple-100 outline-none transition-all"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
+              <FormInput
+                label=""
+                type="password"
+                name="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                icon={Lock}
+              />
             </div>
 
             <div className="flex items-center justify-between px-1">

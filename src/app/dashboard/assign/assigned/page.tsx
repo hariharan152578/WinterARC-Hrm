@@ -17,7 +17,8 @@ import {
   Star,
   ArrowUpDown,
   Wrench,
-  Eye
+  Eye,
+  Trash2
 } from "lucide-react";
 
 /* ================= TYPES ================= */
@@ -44,7 +45,7 @@ interface AssignedTask {
 /* ================= COMPONENTS ================= */
 
 const Avatar = ({ name, initials, color, src }: { name: string, initials: string, color: string, src?: string }) => {
-  const imgUrl = src ? (src.startsWith('http') ? src : `http://localhost:5000/${src}`) : null;
+  const imgUrl = src ? (src.startsWith('http') ? src : `${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${src}`) : null;
   
   return (
     <div className="flex items-center gap-3">
@@ -240,6 +241,18 @@ export default function AssignedTasksPage() {
     if (!user) return [];
     const roleHierarchy: Record<string, string> = { ADMIN: "MANAGER", MANAGER: "TEAMLEAD", TEAMLEAD: "EMPLOYEE" };
     return users.filter(u => u.role === roleHierarchy[user.role]);
+  };
+
+  const handleDeleteTask = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
+    try {
+      await api.delete(`/requestassign/${id}`);
+      toast.success("Task deleted successfully");
+      setTasks(prev => prev.filter(t => t.id !== id));
+      setSelectedTask(null);
+    } catch (error) {
+      toast.error("Failed to delete task");
+    }
   };
 
   const filteredTasks = tasks.filter(t => {
@@ -588,12 +601,20 @@ export default function AssignedTasksPage() {
               )}
             </div>
 
-            <button 
-              onClick={() => setSelectedTask(null)}
-              className="mt-8 bg-black text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-gray-800 transition shadow-xl active:scale-95"
-            >
-              Close Workspace
-            </button>
+            <div className="flex gap-4 mt-8">
+              <button 
+                onClick={() => handleDeleteTask(selectedTask.id)}
+                className="flex-[0.5] bg-rose-50 text-rose-600 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-rose-100 transition shadow-sm active:scale-95 flex items-center justify-center gap-2"
+              >
+                <Trash2 size={16} /> Delete
+              </button>
+              <button 
+                onClick={() => setSelectedTask(null)}
+                className="flex-1 bg-black text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-gray-800 transition shadow-xl active:scale-95"
+              >
+                Close Workspace
+              </button>
+            </div>
           </div>
         </div>
       )}

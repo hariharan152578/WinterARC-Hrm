@@ -38,7 +38,7 @@ interface Request {
 /* ================= COMPONENTS ================= */
 
 const Avatar = ({ name, initials, color, src }: { name: string, initials: string, color: string, src?: string }) => {
-  const imgUrl = src ? (src.startsWith('http') ? src : `http://localhost:5000/${src}`) : null;
+  const imgUrl = src ? (src.startsWith('http') ? src : `${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${src}`) : null;
   
   return (
     <div className="flex items-center gap-3">

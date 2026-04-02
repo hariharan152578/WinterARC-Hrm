@@ -11,10 +11,13 @@ import toast from "react-hot-toast";
 
 
 import { getMasterAdmins, deleteMasterAdmin } from "@/services/user.service";
-import { Trash2, X } from "lucide-react";
+import { Trash2, X, Lock, Mail, Phone, Fingerprint, User } from "lucide-react";
+import FormInput from "@/components/ui/FormInput";
+import PasswordCheckpoints from "@/components/ui/PasswordCheckpoints";
+
 function StatCard({ title, value, color, icon }: any) {
   return (
-    <div className={`${color} p-6 rounded-[2rem] relative flex flex-col justify-between h-44 transition-transform hover:scale-[1.02]`}>
+    <div className={`${color} p-6 rounded-4xl relative flex flex-col justify-between h-44 transition-transform hover:scale-[1.02]`}>
       <div className="p-2 bg-white/40 w-fit rounded-lg shadow-sm">
         {icon}
       </div>
@@ -29,18 +32,7 @@ function StatCard({ title, value, color, icon }: any) {
   );
 }
 
-function MemberItem({ name, role, img }: any) {
-  return (
-    <div className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
-      <img src={img} alt={name} className="w-10 h-10 rounded-full object-cover" />
-      <div>
-        <p className="text-sm font-bold text-gray-800 leading-tight">{name}</p>
-        <p className="text-xs text-gray-400">{role}</p>
-      </div>
-    </div>
-  );
-}
-export default function DashboardPage() {
+export default function MyTeamPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
@@ -56,13 +48,11 @@ export default function DashboardPage() {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false); // ✅ NEW
-const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [joiningDate, setJoiningDate] = useState("");
   const [time, setTime] = useState(new Date());
 
-  /* ===============================
-     LIVE CLOCK
-  =============================== */
   useEffect(() => {
     const interval = setInterval(() => {
       setTime(new Date());
@@ -71,9 +61,6 @@ const [confirmPassword, setConfirmPassword] = useState("");
     return () => clearInterval(interval);
   }, []);
 
-  /* ===============================
-     GREETING FUNCTION
-  =============================== */
   const getGreeting = () => {
     const hour = time.getHours();
     if (hour < 12) return "Good Morning";
@@ -90,9 +77,6 @@ const [confirmPassword, setConfirmPassword] = useState("");
     }
   };
 
-  /* ===============================
-     FETCH SUPER ADMIN DASHBOARD
-  =============================== */
   const fetchDashboard = async () => {
     try {
       if (user?.role === "SUPER_ADMIN") {
@@ -113,9 +97,6 @@ const [confirmPassword, setConfirmPassword] = useState("");
     if (user) fetchData();
   }, [user]);
 
-  /* ===============================
-     GSAP ANIMATION
-  =============================== */
   useEffect(() => {
     if (!loading && containerRef.current) {
       gsap.from(".animate-section", {
@@ -138,12 +119,9 @@ const [confirmPassword, setConfirmPassword] = useState("");
     );
   }
 
-
-
   return (
     <div ref={containerRef} className="space-y-8">
 
-      {/* HEADER + CLOCK (UNCHANGED) */}
       <div className="space-y-6 animate-section">
         <div className="relative w-full rounded-[2.5rem] p-8 md:p-10 flex flex-col md:flex-row items-center justify-between overflow-hidden shadow-lg border border-white/5">
           <div>
@@ -176,15 +154,13 @@ const [confirmPassword, setConfirmPassword] = useState("");
         </div>
       </div>
 
-      {/* MAIN GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-        {/* LEFT COLUMN (UNCHANGED) */}
         <div className="lg:col-span-4 grid grid-cols-2 gap-4 animate-section">
           {user?.role === "SUPER_ADMIN" && stats ? (
             <>
               <StatCard
-                        title="Total Admins"
+                        title="Team Admins"
                         value={stats?.totalAdmins || 0}
                         color="bg-[#E0D7FF]"
                         icon={<Users size={18} />}
@@ -211,10 +187,9 @@ const [confirmPassword, setConfirmPassword] = useState("");
           ) : null}
         </div>
 
-        {/* ✅ UPDATED MIDDLE COLUMN ONLY */}
         <div className="lg:col-span-4 bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-50 animate-section h-full">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-lg">Create Master Admin</h3>
+            <h3 className="font-bold text-lg">Create New Admin</h3>
             <span className="text-xs font-medium text-gray-400">
               Super Admin Only
             </span>
@@ -224,7 +199,6 @@ const [confirmPassword, setConfirmPassword] = useState("");
   onSubmit={async (e) => {
     e.preventDefault();
 
-    // ✅ Required validation
     if (
       !name ||
       !email ||
@@ -237,7 +211,6 @@ const [confirmPassword, setConfirmPassword] = useState("");
       return;
     }
 
-    // ✅ Password match validation
     if (password !== confirmPassword) {
       toast.error("Passwords do not match ❌");
       return;
@@ -252,19 +225,20 @@ const [confirmPassword, setConfirmPassword] = useState("");
         phone,
         personId,
         password,
+        joiningDate,
       });
 
-      toast.success("Master Admin Created Successfully ✅");
+      toast.success("Admin Created Successfully ✅");
 
-      // 🔥 Clear fields
       setName("");
       setEmail("");
       setPhone("");
       setPersonId("");
       setPassword("");
       setConfirmPassword("");
+      setJoiningDate("");
 
-      await fetchDashboard(); // Auto refresh stats
+      await fetchDashboard();
     } catch (err: any) {
       toast.error(
         err?.response?.data?.message || "Something went wrong"
@@ -275,37 +249,24 @@ const [confirmPassword, setConfirmPassword] = useState("");
   }}
   className="space-y-4"
 >
-  {[
-    { label: "Full Name", value: name, setter: setName, type: "text", placeholder: "John Doe" },
-    { label: "Person ID", value: personId, setter: setPersonId, type: "text", placeholder: "123456789" },
-    { label: "Email", value: email, setter: setEmail, type: "email", placeholder: "john.doe@example.com" },
-    { label: "Phone", value: phone, setter: setPhone, type: "text", placeholder: "+1234567890" },
-    { label: "Password", value: password, setter: setPassword, type: "password", placeholder: "••••••••" },
-    { label: "Confirm Password", value: confirmPassword, setter: setConfirmPassword, type: "password", placeholder: "••••••••" },
-  ].map((field, index) => (
-    <div key={index}>
-      <label className="text-xs text-gray-400 mb-1 block">
-        {field.label}
-      </label>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <FormInput label="Full Name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" icon={User} />
+    <FormInput label="Person ID" name="personId" value={personId} onChange={(e) => setPersonId(e.target.value)} placeholder="123456789" icon={Fingerprint} />
+    <FormInput label="Email" type="email" name="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john.doe@example.com" icon={Mail} />
+    <FormInput label="Phone" name="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1234567890" icon={Phone} />
+    <FormInput label="Joining Date" type="date" name="joiningDate" value={joiningDate} onChange={(e) => setJoiningDate(e.target.value)} icon={Calendar} />
+  </div>
 
-      <input
-        type={field.type}
-        value={field.value}
-        onChange={(e) => field.setter(e.target.value)}
-        placeholder={field.placeholder}
-        className="w-full p-3 bg-gray-50 rounded-xl text-sm border-none outline-none focus:ring-1 ring-purple-200"
-      />
-
-      {/* 🔥 Live Password Mismatch Warning */}
-      {field.label === "Confirm Password" &&
-        confirmPassword &&
-        password !== confirmPassword && (
-          <p className="text-xs text-red-500 mt-1">
-            Passwords do not match
-          </p>
-        )}
-    </div>
-  ))}
+  <div className="space-y-4">
+    <FormInput label="Password" type="password" name="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" icon={Lock} />
+    <PasswordCheckpoints password={password} />
+    <FormInput label="Confirm Password" type="password" name="confirmPassword" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" icon={Lock} />
+    {confirmPassword && password !== confirmPassword && (
+      <p className="text-xs text-red-500 mt-1 ml-1 font-medium flex items-center gap-1">
+        <X size={12} /> Passwords do not match
+      </p>
+    )}
+  </div>
 
   <button
     type="submit"
@@ -335,27 +296,24 @@ const [confirmPassword, setConfirmPassword] = useState("");
     {isSubmitting && (
       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
     )}
-    {isSubmitting ? "Creating..." : "Create Master Admin"}
+    {isSubmitting ? "Creating..." : "Create Admin"}
   </button>
 </form>
         </div>
 
 
-        {/* RIGHT COLUMN: Master Admin Management */}
         <div className="lg:col-span-4 bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-50 animate-section h-full relative">
 
-          <h3 className="font-bold text-lg mb-4">Master Admins</h3>
+          <h3 className="font-bold text-lg mb-4">My Team Admins</h3>
 
-          {/* Search */}
           <input
             type="text"
-            placeholder="Search Master Admin..."
+            placeholder="Search Admin..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full p-3 mb-4 bg-gray-50 rounded-xl text-sm outline-none focus:ring-1 ring-purple-200"
           />
 
-          {/* Master List */}
           <div className="space-y-3 max-h-[350px] overflow-y-auto">
             {masters
               .filter((m) =>
@@ -387,17 +345,16 @@ const [confirmPassword, setConfirmPassword] = useState("");
 
             {masters.length === 0 && (
               <p className="text-sm text-gray-400 text-center">
-                No Master Admins Found
+                No Admins Found
               </p>
             )}
           </div>
 
-          {/* Confirmation Dialog */}
           {confirmDelete && (
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-[2.5rem]">
               <div className="bg-white p-6 rounded-2xl shadow-lg w-80 text-center">
                 <p className="font-semibold mb-4">
-                  Are you sure you want to delete?
+                  Are you sure you want to delete this admin?
                 </p>
 
                 <div className="flex justify-center gap-4">
@@ -412,13 +369,13 @@ const [confirmPassword, setConfirmPassword] = useState("");
                     onClick={async () => {
                       try {
                         await deleteMasterAdmin(confirmDelete);
-                        toast.success("Master Admin deleted ✅");
+                        toast.success("Admin deleted ✅");
                         await fetchMasters();
                         await fetchDashboard();
                       } catch (err: any) {
                         toast.error(
                           err?.response?.data?.message ||
-                          "Cannot delete Master Admin"
+                          "Cannot delete Admin"
                         );
                       } finally {
                         setConfirmDelete(null);
@@ -433,7 +390,6 @@ const [confirmPassword, setConfirmPassword] = useState("");
             </div>
           )}
 
-          {/* Drawer Modal */}
           {drawerOpen && selectedMaster && (
             <div className="fixed inset-0 bg-black/40 flex justify-end z-50">
               <div className="bg-white w-96 h-full p-6 shadow-xl relative animate-slide-in">
@@ -444,7 +400,7 @@ const [confirmPassword, setConfirmPassword] = useState("");
                 />
 
                 <h2 className="text-lg font-bold mb-6">
-                  Master Admin Details
+                  Admin Details
                 </h2>
 
                 <div className="space-y-3 text-sm">
@@ -452,6 +408,7 @@ const [confirmPassword, setConfirmPassword] = useState("");
                   <p><strong>Email:</strong> {selectedMaster.email}</p>
                   <p><strong>Phone:</strong> {selectedMaster.phone}</p>
                   <p><strong>Person ID:</strong> {selectedMaster.personId}</p>
+                  <p><strong>Joining Date:</strong> {selectedMaster.joiningDate ? new Date(selectedMaster.joiningDate).toLocaleDateString() : 'N/A'}</p>
                   <p><strong>Created At:</strong> {new Date(selectedMaster.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
@@ -460,26 +417,6 @@ const [confirmPassword, setConfirmPassword] = useState("");
 
         </div>
       </div>
-
-      {/* BOTTOM SECTION (UNCHANGED) */}
-      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-section">
-        <div className="bg-white p-6 rounded-[2.5rem]">
-          <div className="flex justify-between mb-4">
-            <h3 className="font-bold">Attendance</h3>
-            <ArrowUpRight className="text-gray-400 border rounded-full p-1" size={24} />
-          </div>
-          <div className="flex justify-between items-end">
-            <div>
-              <p className="text-xs text-gray-400">{time.toDateString()}</p>
-              <p className="text-2xl font-bold">Clock in</p>
-            </div>
-            <p className="text-2xl font-bold">
-              {time.toLocaleTimeString()}
-            </p>
-          </div>
-        </div>
-      </div> */}
     </div>
   );
 }
-

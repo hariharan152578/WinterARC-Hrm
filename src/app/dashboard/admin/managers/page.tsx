@@ -11,9 +11,12 @@ import {
   Coffee,
   Search,
   LayoutGrid,
-  ShieldAlert
+  ShieldAlert,
+  Lock,
+  Calendar,
 } from "lucide-react";
 import FormInput from "@/components/ui/FormInput";
+import PasswordCheckpoints from "@/components/ui/PasswordCheckpoints";
 import { useAuth } from "@/context/AuthContext";
 import { getHierarchyUsers, createSubUser } from "@/services/user.service";
 import api from "@/lib/axios";
@@ -29,6 +32,7 @@ type ManagerForm = {
   phone: string;
   department: string;
   password: string;
+  joiningDate: string;
 };
 
 const initialFormState: ManagerForm = {
@@ -38,6 +42,7 @@ const initialFormState: ManagerForm = {
   phone: "",
   department: "",
   password: "",
+  joiningDate: "",
 };
 
 /* ===============================
@@ -203,7 +208,12 @@ export default function AdminDashboardPage() {
               <FormInput label="Email Address" name="email" value={formData.email} onChange={handleChange} />
               <FormInput label="Phone Number" name="phone" value={formData.phone} onChange={handleChange} />
               <FormInput label="Department" name="department" value={formData.department} onChange={handleChange} />
-              <FormInput label="Access Password" type="password" name="password" value={formData.password} onChange={handleChange} />
+              <FormInput label="Joining Date" type="date" name="joiningDate" value={formData.joiningDate} onChange={handleChange} icon={Calendar} />
+            </div>
+
+            <div className="space-y-4">
+              <FormInput label="Access Password" type="password" name="password" value={formData.password} onChange={handleChange} icon={Lock} />
+              <PasswordCheckpoints password={formData.password} />
             </div>
 
             <button 

@@ -3,29 +3,24 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { getSuperAdminDashboard, getMasterAdmins } from "@/services/user.service";
-import { getUserProfile } from "@/services/profile.service";
 import DashboardBanner from "@/components/dashboard/DashboardBanner";
-import RightPanel from "@/components/dashboard/RightPanel";
-import { Sparkles, RefreshCw, Users, Globe, Database, Activity } from "lucide-react";
+import { Sparkles, RefreshCw, Users, Globe, Activity } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 export default function SuperDashboardPage() {
   const { user } = useAuth();
   const [masters, setMasters] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     try {
-      const [mastersRes, statsRes, profileData] = await Promise.all([
+      const [mastersRes, statsRes] = await Promise.all([
         getMasterAdmins(),
-        getSuperAdminDashboard(),
-        getUserProfile(Number(user?.id))
+        getSuperAdminDashboard()
       ]);
       setMasters(mastersRes.data);
       setStats(statsRes.data);
-      setProfile(profileData);
     } catch (err) {
       console.error("❌ Failed to fetch super dashboard data", err);
       toast.error("Failed to load dashboard data");
@@ -51,18 +46,11 @@ export default function SuperDashboardPage() {
 
   const statItems = [
     {
-      label: "Master Admins",
+      label: "Team Admins",
       value: stats?.totalAdmins || 0,
       icon: Globe,
       color: "text-purple-600",
       bgColor: "bg-purple-50"
-    },
-    {
-      label: "Active Tenants",
-      value: stats?.totalTenants || 0,
-      icon: Database,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50"
     },
     {
       label: "Global Users",
@@ -81,7 +69,7 @@ export default function SuperDashboardPage() {
   ];
 
   return (
-    <div className="flex flex-col xl:flex-row min-h-screen bg-[#F9FBFB]">
+    <div className="flex flex-col min-h-screen bg-[#F9FBFB]">
       {/* MAIN CONTENT COLUMN */}
       <div className="flex-1 p-4 md:p-6 lg:p-7 space-y-7 max-w-[1400px]">
 
@@ -123,7 +111,7 @@ export default function SuperDashboardPage() {
         />
 
         {/* QUICK STATS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {statItems.map((item, idx) => (
             <div key={idx} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-xs hover:shadow-xl transition-all duration-300 group">
               <div className={`w-12 h-12 rounded-2xl ${item.bgColor} ${item.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
@@ -162,14 +150,6 @@ export default function SuperDashboardPage() {
         </div>
       </div>
 
-      {/* RIGHT PANEL (Tenant Messenger) */}
-      <RightPanel
-        user={user}
-        profile={profile}
-        recentLogs={[]}
-        efficiency={100}
-        efficiencyLogs={[]}
-      />
     </div>
   );
 }

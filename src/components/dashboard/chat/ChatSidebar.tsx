@@ -303,7 +303,7 @@ export default function ChatSidebar({ onSelectUser, onSelectGroup, selectedChatI
                       <div className="relative shrink-0">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold overflow-hidden border-2 shadow-sm transition-all group-hover:scale-105 ${isSelected ? "bg-white text-[#4db6ac] border-[#4db6ac]" : "bg-[#e8f5f4] text-[#4db6ac] border-white"}`}>
                           {contact.profileImage ? (
-                            <img src={`http://localhost:5000/${contact.profileImage}`} className="w-full h-full object-cover" />
+                            <img src={`${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${contact.profileImage}`} className="w-full h-full object-cover" />
                           ) : (
                             contact.name.charAt(0)
                           )}
@@ -352,7 +352,7 @@ export default function ChatSidebar({ onSelectUser, onSelectGroup, selectedChatI
                       <div className="relative shrink-0">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold overflow-hidden border-2 shadow-sm transition-all group-hover:scale-105 ${isSelected ? "bg-white text-[#4db6ac] border-[#4db6ac]" : "bg-[#e8f5f4] text-[#4db6ac] border-white"}`}>
                           {group.profileImage ? (
-                            <img src={`http://localhost:5000/${group.profileImage}`} className="w-full h-full object-cover" />
+                            <img src={`${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${group.profileImage}`} className="w-full h-full object-cover" />
                           ) : (
                             group.groupname.charAt(0)
                           )}
@@ -476,7 +476,7 @@ export default function ChatSidebar({ onSelectUser, onSelectGroup, selectedChatI
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-[#e8f5f4] flex items-center justify-center text-[11px] font-black text-[#4db6ac]">
                       {member.profileImage ? (
-                        <img src={`http://localhost:5000/${member.profileImage}`} className="w-full h-full object-cover rounded-full" />
+                        <img src={`${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${member.profileImage}`} className="w-full h-full object-cover rounded-full" />
                       ) : (
                         member.name.charAt(0)
                       )}

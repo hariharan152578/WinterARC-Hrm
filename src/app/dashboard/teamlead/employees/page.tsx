@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import Skeleton from "@/components/ui/Skeleton";
-import { Users, Coffee, Trash2, ChevronRight, Activity, Clock, CheckCircle2, Phone, Mail, Building } from "lucide-react";
+import { Users, Coffee, Trash2, ChevronRight, Activity, Clock, CheckCircle2, Phone, Mail, Building, Lock, Calendar, Fingerprint, User } from "lucide-react";
 import FormInput from "@/components/ui/FormInput";
+import PasswordCheckpoints from "@/components/ui/PasswordCheckpoints";
 
 import {
   validateEmail,
@@ -30,7 +31,7 @@ function MemberCard({ member, onDelete }: { member: any; onDelete: (id: number) 
   const tasks = stats.tasks || {};
 
   return (
-    <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 hover:border-blue-200 transition-all group relative overflow-hidden">
+    <div className="bg-white p-6 rounded-4xl shadow-sm border border-gray-100 hover:border-blue-200 transition-all group relative overflow-hidden">
       {/* Background Accent */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110" />
 
@@ -142,6 +143,7 @@ export default function TeamEmployeesPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [department, setDepartment] = useState("");
+  const [joiningDate, setJoiningDate] = useState("");
 
   const fetchData = async () => {
     try {
@@ -195,11 +197,61 @@ export default function TeamEmployeesPage() {
     m.department.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    let newErrors: any = {};
+    if (!personId) newErrors.personId = "Person ID required";
+    if (!name) newErrors.name = "Name required";
+    if (!department) newErrors.department = "Department required";
+    if (!validateEmail(email)) newErrors.email = "Invalid email";
+    if (!validatePhone(phone)) newErrors.phone = "Invalid phone";
+    if (!validatePassword(password))
+      newErrors.password = "Complexity required";
+    if (password !== confirmPassword)
+      newErrors.confirmPassword = "Passwords do not match";
+    if (!joiningDate) newErrors.joiningDate = "Joining date required";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await createSubUser({
+        role: "EMPLOYEE",
+        personId,
+        name,
+        phone,
+        email,
+        password,
+        department,
+        joiningDate,
+      });
+
+      toast.success("Welcome to the team! 🎉");
+      setPersonId("");
+      setName("");
+      setPhone("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setDepartment("");
+      setJoiningDate("");
+      setErrors({});
+      await fetchData();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Recruitment failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div ref={containerRef} className="p-4 md:p-8 space-y-8 max-w-[1600px] mx-auto min-h-screen bg-[#F9FBFB]">
 
       {/* HEADER SECTION */}
-      <div className="animate-section flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+      <div className="animate-section flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-8 rounded-4xl shadow-sm border border-gray-100">
         <div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">The Dream Team</h1>
           <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-1">
@@ -237,7 +289,7 @@ export default function TeamEmployeesPage() {
             ))}
             
             {filteredMembers.length === 0 && (
-              <div className="bg-white p-20 rounded-[2.5rem] text-center border border-dashed border-gray-200">
+              <div className="bg-white p-20 rounded-4xl text-center border border-dashed border-gray-200">
                 <Coffee className="w-12 h-12 text-gray-200 mx-auto mb-4" />
                 <h4 className="text-lg font-bold text-gray-400">No members found</h4>
                 <p className="text-xs text-gray-300 mt-1">Try adjusting your search criteria or add a new member.</p>
@@ -247,7 +299,7 @@ export default function TeamEmployeesPage() {
         </div>
 
         {/* CREATE EMPLOYEE FORM */}
-        <div className="lg:col-span-4 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 animate-section sticky top-8 order-1 lg:order-2">
+        <div className="lg:col-span-4 bg-white p-8 rounded-4xl shadow-sm border border-gray-100 animate-section sticky top-8 order-1 lg:order-2">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center">
               <Users size={20} />
@@ -255,62 +307,19 @@ export default function TeamEmployeesPage() {
             <h3 className="text-xl font-black text-gray-900">Add Member</h3>
           </div>
 
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              let newErrors: any = {};
-              if (!personId) newErrors.personId = "Person ID required";
-              if (!name) newErrors.name = "Name required";
-              if (!department) newErrors.department = "Department required";
-              if (!validateEmail(email)) newErrors.email = "Invalid email";
-              if (!validatePhone(phone)) newErrors.phone = "Invalid phone";
-              if (!validatePassword(password))
-                newErrors.password = "Min 8 chars, 1 uppercase & 1 number required";
-              if (password !== confirmPassword)
-                newErrors.confirmPassword = "Passwords do not match";
-
-              if (Object.keys(newErrors).length > 0) {
-                setErrors(newErrors);
-                return;
-              }
-
-              try {
-                setIsSubmitting(true);
-                await createSubUser({
-                  role: "EMPLOYEE",
-                  personId,
-                  name,
-                  phone,
-                  email,
-                  password,
-                  department,
-                });
-
-                toast.success("Welcome to the team! 🎉");
-                setPersonId("");
-                setName("");
-                setPhone("");
-                setEmail("");
-                setPassword("");
-                setConfirmPassword("");
-                setDepartment("");
-                setErrors({});
-                await fetchData();
-              } catch (err: any) {
-                toast.error(err?.response?.data?.message || "Recruitment failed");
-              } finally {
-                setIsSubmitting(false);
-              }
-            }}
-            className="space-y-4"
-          >
-            <FormInput label="Personnel ID" name="personId" placeholder="EMP-001" value={personId} onChange={(e) => setPersonId(e.target.value)} error={errors.personId} />
-            <FormInput label="Full Name" name="name" placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} error={errors.name} />
-            <FormInput label="Business Email" name="email" placeholder="john@company.com" value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} />
-            <FormInput label="Phone Number" name="phone" placeholder="+1..." value={phone} onChange={(e) => setPhone(e.target.value)} error={errors.phone} />
-            <FormInput label="Department" name="department" placeholder="Engineering" value={department} onChange={(e) => setDepartment(e.target.value)} error={errors.department} />
-            <FormInput label="Access Password" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} />
-            <FormInput label="Confirm Access" name="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} error={errors.confirmPassword} />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <FormInput label="Personnel ID" name="personId" placeholder="EMP-001" value={personId} onChange={(e) => setPersonId(e.target.value)} error={errors.personId} icon={Fingerprint} />
+            <FormInput label="Full Name" name="name" placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} error={errors.name} icon={User} />
+            <FormInput label="Business Email" name="email" placeholder="john@company.com" value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} icon={Mail} />
+            <FormInput label="Phone Number" name="phone" placeholder="+1..." value={phone} onChange={(e) => setPhone(e.target.value)} error={errors.phone} icon={Phone} />
+            <FormInput label="Department" name="department" placeholder="Engineering" value={department} onChange={(e) => setDepartment(e.target.value)} error={errors.department} icon={Building} />
+            <FormInput label="Joining Date" type="date" name="joiningDate" value={joiningDate} onChange={(e) => setJoiningDate(e.target.value)} error={errors.joiningDate} icon={Calendar} />
+            
+            <div className="space-y-4 !mt-6">
+              <FormInput label="Access Password" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} icon={Lock} />
+              <PasswordCheckpoints password={password} />
+              <FormInput label="Confirm Access" name="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} error={errors.confirmPassword} icon={Lock} />
+            </div>
 
             <button 
               type="submit" 
@@ -327,7 +336,7 @@ export default function TeamEmployeesPage() {
       {/* DELETE MODAL */}
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white p-8 rounded-[2rem] max-w-sm w-full text-center shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="bg-white p-8 rounded-4xl max-w-sm w-full text-center shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
               <Trash2 size={32} />
             </div>

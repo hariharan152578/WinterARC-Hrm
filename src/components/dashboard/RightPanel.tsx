@@ -25,7 +25,7 @@ export default function RightPanel({ user, profile, recentLogs, efficiency, effi
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const profileImage = profile?.profileImage
-    ? `http://localhost:5000/${profile.profileImage}`
+    ? `${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${profile.profileImage}`
     : "/avatar.png";
 
   useEffect(() => {

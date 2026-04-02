@@ -51,7 +51,7 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
                   <div className="w-6 h-6 bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center">
                     <img
                       src={report.sender?.profileImage || report.receiver?.profileImage
-                        ? `http://localhost:5000/${report.sender?.profileImage || report.receiver?.profileImage}`
+                        ? `${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${report.sender?.profileImage || report.receiver?.profileImage}`
                         : `https://res.cloudinary.com/dlb52kdyx/image/upload/v1774179997/0185e4c0175af1347a02a9a814ede0e2-removebg-preview_b2rhgy.png`}
                       alt="avatar"
                       className="w-full h-full object-cover"
@@ -76,7 +76,7 @@ export default function ReportDetailsModal({ report, isOpen, onClose }: ReportDe
                   <div className="grid grid-cols-1 gap-2">
                     {report.files.map((file: string, index: number) => {
                       const fileName = file.split('/').pop() || `Attachment ${index + 1}`;
-                      const fileUrl = `http://localhost:5000/${file}`;
+                      const fileUrl = `${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${file}`;
                       return (
                         <a
                           key={index}

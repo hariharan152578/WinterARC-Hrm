@@ -91,4 +91,10 @@ export const EventService = {
 
     return response.data;
   },
+
+  // ✅ Delete Event
+  async deleteEvent(id: number) {
+    const response = await api.delete(`/events/event/${id}`);
+    return response.data;
+  },
 };

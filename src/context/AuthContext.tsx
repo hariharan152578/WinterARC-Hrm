@@ -52,7 +52,7 @@ export const AuthProvider = ({
         socket.disconnect();
       }
 
-      const s = io("http://localhost:5000", {
+      const s = io(process.env.NEXT_PUBLIC_IMAGE_API_URL!, {
         auth: { token },
         reconnection: true,
       });
@@ -207,7 +207,7 @@ export const AuthProvider = ({
     try {
       const storedToken = localStorage.getItem("token");
       if (storedToken) {
-        await fetch("http://localhost:5000/api/auth/logout", {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${storedToken}`,

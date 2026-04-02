@@ -54,6 +54,11 @@ const LeaveService = {
     const response = await api.put(`/leaves/${id}/action`, { action, message });
     return response.data;
   },
+
+  deleteLeave: async (id: number) => {
+    const response = await api.delete(`/leaves/${id}`);
+    return response.data;
+  },
 };
 
 export default LeaveService;

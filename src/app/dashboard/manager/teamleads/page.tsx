@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import Skeleton from "@/components/ui/Skeleton";
-import { Users, Coffee, Trash2, ChevronRight } from "lucide-react";
+import { Users, Coffee, Trash2, ChevronRight, Lock, Calendar, Fingerprint, User, Mail, Phone, Building2 } from "lucide-react";
 import FormInput from "@/components/ui/FormInput";
+import PasswordCheckpoints from "@/components/ui/PasswordCheckpoints";
 
 import {
   validateEmail,
@@ -19,10 +20,10 @@ import toast from "react-hot-toast";
 
 /* ===============================
     STAT CARD COMPONENT
-================================ */
+ ================================ */
 function StatCard({ title, value, color, icon }: any) {
   return (
-    <div className={`${color} p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] relative flex flex-col justify-between h-36 md:h-44 transition-transform hover:scale-[1.02] shadow-sm`}>
+    <div className={`${color} p-5 md:p-6 rounded-4xl relative flex flex-col justify-between h-36 md:h-44 transition-transform hover:scale-[1.02] shadow-sm`}>
       <div className="p-2 bg-white/40 w-fit rounded-lg shadow-sm">
         {icon}
       </div>
@@ -49,7 +50,7 @@ export default function ManagerDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<any>({});
-  const [joiningDate, setJoiningDate] = useState(""); // New state
+  const [joiningDate, setJoiningDate] = useState(""); 
   const [personId, setPersonId] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -113,12 +114,43 @@ export default function ManagerDashboardPage() {
     );
   }
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    let newErrors: any = {};
+    if (!personId) newErrors.personId = "Required";
+    if (!name) newErrors.name = "Required";
+    if (!department) newErrors.department = "Required";
+    if (!validateEmail(email)) newErrors.email = "Invalid email";
+    if (!validatePhone(phone)) newErrors.phone = "10 digits required";
+    if (!validatePassword(password)) newErrors.password = "Complexity required";
+    if (password !== confirmPassword) newErrors.confirmPassword = "Mismatch";
+    if (!joiningDate) newErrors.joiningDate = "Joining date required";
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await createSubUser({ role: "TEAMLEAD", personId, name, phone, email, password, department, joiningDate });
+      toast.success("Created ✅");
+      setPersonId(""); setName(""); setPhone(""); setEmail(""); setPassword(""); setConfirmPassword(""); setDepartment(""); setJoiningDate("");
+      setErrors({});
+      await fetchUsers();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div ref={containerRef} className="p-0 md:p-4 space-y-6 md:space-y-8 max-w-7xl mx-auto overflow-x-hidden">
 
       {/* ================= HEADER ================= */}
       <div className="animate-section">
-        <div className="bg-white md:bg-transparent rounded-[1.5rem] md:rounded-none p-6 md:p-0 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="bg-white md:bg-transparent rounded-3xl md:rounded-none p-6 md:p-0 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h2 className="text-xs md:text-sm text-gray-400 font-medium">
               Hello {user?.name?.split(" ")[0]} 👋
@@ -147,7 +179,7 @@ export default function ManagerDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
 
         {/* CREATE TEAMLEAD FORM */}
-        <div className="lg:col-span-8 bg-white p-6 md:p-10 rounded-[1.5rem] md:rounded-[2.5rem] shadow-sm animate-section border border-gray-100">
+        <div className="lg:col-span-8 bg-white p-6 md:p-10 rounded-4xl shadow-sm animate-section border border-gray-100">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-2">
             <h3 className="text-lg md:text-xl font-bold">Create Team Lead</h3>
             <span className="text-[10px] bg-purple-50 px-3 py-1 rounded-full text-purple-600 font-bold uppercase border border-purple-100">
@@ -155,103 +187,37 @@ export default function ManagerDashboardPage() {
             </span>
           </div>
 
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              let newErrors: any = {};
-              if (!personId) newErrors.personId = "Required";
-              if (!name) newErrors.name = "Required";
-              if (!department) newErrors.department = "Required";
-              if (!validateEmail(email)) newErrors.email = "Invalid email";
-              if (!validatePhone(phone)) newErrors.phone = "10 digits required";
-              if (!validatePassword(password)) newErrors.password = "Complexity required";
-              if (password !== confirmPassword) newErrors.confirmPassword = "Mismatch";
-              if (!joiningDate) newErrors.joiningDate = "Joining date required";
-              if (Object.keys(newErrors).length > 0) {
-                setErrors(newErrors);
-                return;
-              }
-
-              try {
-                setIsSubmitting(true);
-                await createSubUser({ role: "TEAMLEAD", personId, name, phone, email, password, department, joiningDate });
-                toast.success("Created ✅");
-                setPersonId(""); setName(""); setPhone(""); setEmail(""); setPassword(""); setConfirmPassword(""); setDepartment(""); setJoiningDate("");
-                setErrors({});
-                await fetchUsers();
-              } catch (err: any) {
-                toast.error(err?.response?.data?.message || "Error");
-              } finally {
-                setIsSubmitting(false);
-              }
-            }}
-            className="space-y-6"
-          >
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6 md:gap-y-8">
-              <FormInput
-                label="Person ID"
-                value={personId}
-                onChange={(e) => setPersonId(e.target.value)}
-                error={errors.personId} name={""} />
-              <FormInput
-                label="Full Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                error={errors.name} name={""} />
-              <FormInput
-                label="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                error={errors.email} name={""} />
-              <FormInput
-                label="Phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                error={errors.phone} name={""} />
+              <FormInput label="Person ID" name="personId" value={personId} onChange={(e) => setPersonId(e.target.value)} error={errors.personId} icon={Fingerprint} />
+              <FormInput label="Full Name" name="name" value={name} onChange={(e) => setName(e.target.value)} error={errors.name} icon={User} />
+              <FormInput label="Email" name="email" value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} icon={Mail} />
+              <FormInput label="Phone" name="phone" value={phone} onChange={(e) => setPhone(e.target.value)} error={errors.phone} icon={Phone} />
+              <FormInput label="Joining Date" type="date" name="joiningDate" value={joiningDate} onChange={(e) => setJoiningDate(e.target.value)} error={errors.joiningDate} icon={Calendar} />
+              <FormInput label="Department" name="department" value={department} onChange={(e) => setDepartment(e.target.value)} error={errors.department} icon={Building2} />
+            </div>
 
-              {/* NEW FIELD: Joining Date */}
-              <FormInput
-                label="Joining Date"
-                type="date"
-                value={joiningDate}
-                onChange={(e) => setJoiningDate(e.target.value)}
-                error={errors.joiningDate} name={""} />
+            <div className="space-y-4">
+              <FormInput label="Password" type="password" name="password" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} icon={Lock} />
+              <PasswordCheckpoints password={password} />
+              <FormInput label="Confirm Password" type="password" name="confirmPassword" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} error={errors.confirmPassword} icon={Lock} />
+            </div>
 
-              <FormInput
-                label="Department"
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                error={errors.department} name={""} />
-
-              <FormInput
-                label="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                error={errors.password} name={""} />
-              <FormInput
-                label="Confirm Password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                error={errors.confirmPassword} name={""} />
-
-              <div className="md:col-span-2 mt-4">
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-colors disabled:opacity-50"
-                >
-                  {isSubmitting ? "Processing..." : "Register Team Lead"}
-                </button>
-              </div>
+            <div className="md:col-span-2 mt-4">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-colors disabled:opacity-50"
+              >
+                {isSubmitting ? "Processing..." : "Register Team Lead"}
+              </button>
             </div>
           </form>
         </div>
 
         {/* TEAMLEAD LIST / HIERARCHY */}
         <div className="lg:col-span-4 space-y-6 animate-section w-full">
-          <div className="bg-white p-6 rounded-[1.5rem] md:rounded-[2.5rem] shadow-sm border border-gray-100 relative min-h-[400px]">
+          <div className="bg-white p-6 rounded-4xl shadow-sm border border-gray-100 relative min-h-[400px]">
             <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
               <Users size={20} className="text-purple-600" /> Local Hierarchy
             </h3>
@@ -288,7 +254,7 @@ export default function ManagerDashboardPage() {
 
             {/* DELETE MODAL WITHIN CONTAINER */}
             {confirmDelete && (
-              <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center rounded-[1.5rem] md:rounded-[2.5rem] z-10 px-6">
+              <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center rounded-4xl z-10 px-6">
                 <div className="text-center">
                   <div className="bg-red-50 p-4 rounded-full w-fit mx-auto mb-4 text-red-500">
                     <Trash2 size={24} />

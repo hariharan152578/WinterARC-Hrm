@@ -982,7 +982,7 @@ import { useEffect, useState, useMemo } from "react";
 import { EventService, EventType } from "@/services/event.service";
 import {
   Plus, Calendar as CalendarIcon, Search, X, ChevronLeft, ChevronRight,
-  CalendarDays, Clock, AlignLeft, Users
+  CalendarDays, Clock, AlignLeft, Users, Trash2
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import toast from "react-hot-toast";
@@ -1040,6 +1040,19 @@ export default function EventsPage() {
     } catch (err: any) { 
       console.error(err); 
       const msg = err.response?.data?.error || err.response?.data?.message || "Failed to create event";
+      toast.error(msg);
+    }
+  };
+
+  const handleDeleteEvent = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this event?")) return;
+    try {
+      await EventService.deleteEvent(id);
+      toast.success("Event deleted successfully!");
+      setEvents(prev => prev.filter(e => e.id !== id));
+      setSelectedEvent(null);
+    } catch (err: any) {
+      const msg = err.response?.data?.error || err.response?.data?.message || "Failed to delete event";
       toast.error(msg);
     }
   };
@@ -1102,7 +1115,23 @@ export default function EventsPage() {
                 )}
               </div>
               <p className="text-sm text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-100">{selectedEvent.description || "No description."}</p>
-              <button onClick={() => setSelectedEvent(null)} className="w-full mt-6 bg-slate-900 text-white text-sm font-bold py-3 rounded-xl">Close</button>
+              
+              <div className="flex gap-4 mt-6">
+                {currentUser?.id === selectedEvent.createdBy && (
+                  <button 
+                    onClick={() => handleDeleteEvent(selectedEvent.id)} 
+                    className="flex-[0.5] bg-rose-50 text-rose-600 font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-rose-100 transition-colors shadow-sm text-sm"
+                  >
+                    <Trash2 size={16} /> Delete
+                  </button>
+                )}
+                <button 
+                  onClick={() => setSelectedEvent(null)} 
+                  className="flex-1 bg-slate-900 text-white text-sm font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

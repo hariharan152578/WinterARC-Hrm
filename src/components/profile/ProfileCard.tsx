@@ -13,7 +13,7 @@ const ProfileCard = ({ user, setUser }: Props) => {
   const [open, setOpen] = useState(false);
 
   const imgPath = user.profileImage
-    ? `http://localhost:5000/${user.profileImage}`
+    ? `${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${user.profileImage}`
     : "/avatar.png";
 
   return (

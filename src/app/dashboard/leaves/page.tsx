@@ -17,7 +17,8 @@ import {
   ArrowUpDown,
   Wrench,
   X,
-  User as UserIcon
+  User as UserIcon,
+  Trash2
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import LeaveService, { LeaveData, LeavePayload } from "@/services/leave.service";
@@ -28,7 +29,7 @@ import gsap from "gsap";
 /* ================= COMPONENTS ================= */
 
 const Avatar = ({ name, initials, color, src }: { name: string, initials: string, color: string, src?: string }) => {
-  const imgUrl = src ? (src.startsWith('http') ? src : `http://localhost:5000/${src}`) : null;
+  const imgUrl = src ? (src.startsWith('http') ? src : `${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${src}`) : null;
   
   return (
     <div className="flex items-center gap-3">
@@ -172,6 +173,18 @@ export default function LeaveManagementPage() {
       fetchData();
     } catch (err) {
       toast.error("Action failed");
+    }
+  };
+
+  const handleDeleteLeave = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this leave request?")) return;
+    try {
+      await LeaveService.deleteLeave(id);
+      toast.success("Leave request deleted successfully ✅");
+      setViewingLeave(null);
+      fetchData();
+    } catch (err) {
+      toast.error("Failed to delete request");
     }
   };
 
@@ -641,12 +654,22 @@ export default function LeaveManagementPage() {
 
                 {/* CLOSE BUTTON (for history) */}
                 {(activeTab === "my-leaves" || viewingLeave.status !== "PENDING") && (
-                  <button
-                    onClick={() => setViewingLeave(null)}
-                    className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-slate-200 transition-all flex items-center justify-center gap-2 group hover:bg-black active:scale-[0.98] uppercase tracking-widest text-xs"
-                  >
-                    Close Preview
-                  </button>
+                  <div className="flex gap-4 pt-2">
+                    {activeTab === "my-leaves" && (
+                      <button
+                        onClick={() => handleDeleteLeave(viewingLeave.id)}
+                        className="flex-1 bg-rose-50 text-rose-600 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 hover:bg-rose-100 active:scale-[0.98] text-xs uppercase tracking-widest shadow-sm"
+                      >
+                        <Trash2 size={16} /> Delete
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setViewingLeave(null)}
+                      className="flex-[2] bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-slate-200 transition-all flex items-center justify-center gap-2 group hover:bg-black active:scale-[0.98] uppercase tracking-widest text-xs"
+                    >
+                      Close Preview
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

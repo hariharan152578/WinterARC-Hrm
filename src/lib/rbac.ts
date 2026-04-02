@@ -19,6 +19,7 @@ export const roleHomeRoute: Record<Role, string> = {
  */
 export const routeAccessMap: Record<string, Role[]> = {
   "/dashboard/super": ["SUPER_ADMIN"],
+  "/dashboard/super/team": ["SUPER_ADMIN"],
 
   "/dashboard/masters": ["MASTER_ADMIN"],
 

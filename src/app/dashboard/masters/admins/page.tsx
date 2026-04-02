@@ -11,8 +11,10 @@ import {
   Coffee,
   Trash2,
   Search,
+  Lock,
 } from "lucide-react";
 import FormInput from "@/components/ui/FormInput";
+import PasswordCheckpoints from "@/components/ui/PasswordCheckpoints";
 import {
   validateEmail,
   validatePhone,
@@ -43,6 +45,7 @@ const initialFormState = {
   noOfTeamLeads: 0,
   sessionStartDate: "",
   sessionEndDate: "",
+  joiningDate: "",
 };
 
 /* ================= COMPONENTS ================= */
@@ -50,7 +53,7 @@ const initialFormState = {
 function StatCard({ title, value, color, icon }: any) {
   return (
     <div
-      className={`${color} p-6 rounded-[2rem] relative flex flex-col justify-between h-44 transition-transform hover:scale-[1.02] shadow-sm`}
+      className={`${color} p-6 rounded-4xl relative flex flex-col justify-between h-44 transition-transform hover:scale-[1.02] shadow-sm`}
     >
       <div className="p-2 bg-white/40 w-fit rounded-lg shadow-sm">
         {icon}
@@ -184,9 +187,9 @@ export default function MasterDashboardPage() {
   if (loading) {
     return (
       <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Skeleton className="h-44 w-full rounded-[2rem]" />
-        <Skeleton className="h-44 w-full rounded-[2rem]" />
-        <Skeleton className="h-44 w-full rounded-[2rem]" />
+        <Skeleton className="h-44 w-full rounded-4xl" />
+        <Skeleton className="h-44 w-full rounded-4xl" />
+        <Skeleton className="h-44 w-full rounded-4xl" />
       </div>
     );
   }
@@ -195,7 +198,7 @@ export default function MasterDashboardPage() {
     <div ref={containerRef} className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
       
       {/* HEADER */}
-      <div className="animate-section bg-white rounded-[2.5rem] p-8 md:p-10 flex flex-col md:flex-row justify-between items-center shadow-sm border border-gray-50">
+      <div className="animate-section bg-white rounded-4xl p-8 md:p-10 flex flex-col md:flex-row justify-between items-center shadow-sm border border-gray-50">
         <div>
           <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">
             Welcome back, {user?.name?.split(" ")[0]}
@@ -220,7 +223,7 @@ export default function MasterDashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* CREATE ADMIN FORM */}
-        <div className="lg:col-span-8 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-50 animate-section">
+        <div className="lg:col-span-8 bg-white p-8 rounded-4xl shadow-sm border border-gray-50 animate-section">
           <div className="flex justify-between items-center mb-8">
             <h3 className="text-xl font-bold">Register New Admin</h3>
             <span className="text-xs bg-gray-100 px-3 py-1 rounded-full text-gray-500 font-bold uppercase">Administrator Access</span>
@@ -232,10 +235,15 @@ export default function MasterDashboardPage() {
               <FormInput label="Full Name" name="name" value={formData.name} onChange={handleInputChange} error={errors.name} />
               <FormInput label="Email Address" name="email" value={formData.email} onChange={handleInputChange} error={errors.email} />
               <FormInput label="Phone Number" name="phone" value={formData.phone} onChange={handleInputChange} error={errors.phone} />
-              <FormInput label="Password" type="password" name="password" value={formData.password} onChange={handleInputChange} error={errors.password} />
-              <FormInput label="Confirm Password" type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} error={errors.confirmPassword} />
               <FormInput label="Company Name" name="companyName" value={formData.companyName} onChange={handleInputChange} error={errors.companyName} />
               <FormInput label="Position" name="position" value={formData.position} onChange={handleInputChange} error={errors.position} />
+              <FormInput label="Joining Date" type="date" name="joiningDate" value={formData.joiningDate} onChange={handleInputChange} icon={Calendar} />
+            </div>
+
+            <div className="space-y-4">
+              <FormInput label="Password" type="password" name="password" value={formData.password} onChange={handleInputChange} error={errors.password} icon={Lock} />
+              <PasswordCheckpoints password={formData.password} />
+              <FormInput label="Confirm Password" type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} error={errors.confirmPassword} icon={Lock} />
             </div>
 
             <div className="p-6 bg-gray-50 rounded-3xl grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -261,7 +269,7 @@ export default function MasterDashboardPage() {
 
         {/* ADMIN LIST */}
         <div className="lg:col-span-4 space-y-6 animate-section">
-          <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-50 relative min-h-[500px]">
+          <div className="bg-white p-6 rounded-4xl shadow-sm border border-gray-50 relative min-h-[500px]">
             <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
               <Users size={20} />Local Hierarchy
             </h3>
@@ -303,7 +311,7 @@ export default function MasterDashboardPage() {
 
             {/* DELETE MODAL OVERLAY */}
             {confirmDelete && (
-              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-[2.5rem] z-10 px-6">
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-4xl z-10 px-6">
                 <div className="bg-white p-8 rounded-[2rem] shadow-2xl border border-gray-100 text-center w-full">
                   <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Trash2 size={32} />

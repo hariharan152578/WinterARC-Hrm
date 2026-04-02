@@ -13,6 +13,7 @@ export interface User {
   personId: string;
   role: Role;
   tenantId: number | null;
+  joiningDate?: string | null;
 }
 
 export interface LoginResponse {

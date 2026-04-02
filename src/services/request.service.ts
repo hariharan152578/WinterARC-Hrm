@@ -62,6 +62,11 @@ const RequestService = {
     const response = await api.put(`/requests/${requestId}/action`, { action, message });
     return response.data;
   },
+
+  deleteRequest: async (requestId: number) => {
+    const response = await api.delete(`/requests/${requestId}`);
+    return response.data;
+  },
 };
 
 export default RequestService;

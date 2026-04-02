@@ -189,7 +189,7 @@ export default function InboxPage() {
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-slate-100 rounded-xl overflow-hidden shadow-xs ring-2 ring-white group-hover:ring-[#4db6ac]/20 transition-all text-[#4db6ac] flex items-center justify-center">
                         <img
-                          src={report.sender?.profileImage ? `http://localhost:5000/${report.sender.profileImage}` : `https://res.cloudinary.com/dlb52kdyx/image/upload/v1774179997/0185e4c0175af1347a02a9a814ede0e2-removebg-preview_b2rhgy.png`}
+                          src={report.sender?.profileImage ? `${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${report.sender.profileImage}` : `https://res.cloudinary.com/dlb52kdyx/image/upload/v1774179997/0185e4c0175af1347a02a9a814ede0e2-removebg-preview_b2rhgy.png`}
                           alt={report.sender?.name}
                           className="w-full h-full object-cover"
                         />

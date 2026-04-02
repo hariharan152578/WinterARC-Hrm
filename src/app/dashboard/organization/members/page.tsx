@@ -178,7 +178,7 @@ export default function MembersTablePage() {
                       <div className="flex items-center gap-4">
                         <div className="relative shrink-0">
                           <img
-                            src={member.profileImage ? `http://localhost:5000/${member.profileImage}` : `https://ui-avatars.com/api/?name=${member.name}&background=F9FBFB&color=00A884&size=128&bold=true`}
+                            src={member.profileImage ? `${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${member.profileImage}` : `https://ui-avatars.com/api/?name=${member.name}&background=F9FBFB&color=00A884&size=128&bold=true`}
                             className="w-12 h-12 rounded-2xl object-cover ring-2 ring-white shadow-sm transition-transform duration-500 group-hover:scale-110"
                             alt={member.name}
                           />

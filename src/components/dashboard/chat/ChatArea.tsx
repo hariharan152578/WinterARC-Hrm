@@ -203,7 +203,7 @@ export default function ChatArea({ user, group }: ChatAreaProps) {
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-[#e8f5f4] flex items-center justify-center font-bold text-[#4db6ac] border border-[#4db6ac]/30 shadow-sm overflow-hidden">
             {target.profileImage ? (
-              <img src={`http://localhost:5000/${target.profileImage}`} className="w-full h-full object-cover" />
+              <img src={`${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${target.profileImage}`} className="w-full h-full object-cover" />
             ) : (
               target.groupname?.charAt(0) || target.name?.charAt(0)
             )}
@@ -286,12 +286,12 @@ export default function ChatArea({ user, group }: ChatAreaProps) {
                           return (
                             <div key={i} className={`rounded-xl overflow-hidden border ${isMine ? "border-[#4db6ac]/30" : "border-gray-100"}`}>
                               {isImg ? (
-                                <img src={`http://localhost:5000/${at.url}`} className="max-w-full h-auto" />
+                                <img src={`${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${at.url}`} className="max-w-full h-auto" />
                               ) : (
                                 <div className="flex items-center gap-3 p-2 bg-black/5">
                                   <FileText size={16} />
                                   <span className="text-[10px] truncate max-w-[150px]">{at.name}</span>
-                                  <a href={`http://localhost:5000/${at.url}`} download className="ml-auto p-1 hover:bg-black/10 rounded">
+                                  <a href={`${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${at.url}`} download className="ml-auto p-1 hover:bg-black/10 rounded">
                                     <Download size={14} />
                                   </a>
                                 </div>

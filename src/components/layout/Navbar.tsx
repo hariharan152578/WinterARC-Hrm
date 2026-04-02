@@ -434,7 +434,7 @@ export default function Navbar() {
   }, [user]);
 
   const profileImage = profile?.profileImage
-    ? `http://localhost:5000/${profile.profileImage}`
+    ? `${process.env.NEXT_PUBLIC_IMAGE_API_URL}/${profile.profileImage}`
     : "https://res.cloudinary.com/dlb52kdyx/image/upload/v1774179997/0185e4c0175af1347a02a9a814ede0e2-removebg-preview_b2rhgy.png";
 
   const confirmLogout = () => {
